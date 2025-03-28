@@ -13,18 +13,15 @@ export default function SideNavigationBar({ user }) {
 
     const location = useLocation();
     const currentUrl = location.pathname;
-   
+
     // Link style
     const linkStyle = "w-[90%] h-[45px] mb-[10px] rounded-[10px] pl-[20px] flex items-center text-[16px] hover:bg-[#e7eef9] transition-all duration-500 "
 
     return (
         <div className="hidden lg:w-[250px] lg:block xl:w-[320px] h-screen border-r border-gray-300 relative pt-[10px]">
             {/* name of company */}
-            <div className="w-[100%] flex justify-center border-b border-gray-300 pb-[10px]">
-                <div className="h-[60px] flex justify-center items-center">
-                    <img src="/logo.png" className="lg:w-[35px] xl:w-[40px] lg:h-[35px] xl:h-[40px] mr-[10px]" />
-                    <span className="lg:text-[30px] xl:text-[35px] font-bold text-[#3874cb]">Blue villa</span>
-                </div>
+            <div className="w-[100%] h-[80px] flex justify-center items-center border-b border-gray-300">
+                <img src="/Blue Villa Logo.jpg" className="lg:w-[160px] lg:h-[50px] xl:w-[180px] xl:h-[55px]" />
             </div>
 
             {/* links */}
