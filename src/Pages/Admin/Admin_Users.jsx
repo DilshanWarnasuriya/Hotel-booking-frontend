@@ -1,10 +1,11 @@
 import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Avatar, Box, Typography, IconButton, Pagination } from "@mui/material";
 import { useState } from "react";
-import { TiUserAdd } from "react-icons/ti";
+import { TiThMenu, TiUserAdd } from "react-icons/ti";
 import { AiOutlineSearch } from "react-icons/ai";
 import { MdEdit, MdDelete } from "react-icons/md";
 import Tabs from "../../Components/Tabs";
 import Badge from "../../Components/Badge";
+import SideNavigationDrawer from "../../Components/SideNavigationDrawer";
 
 export default function AdminUsers() {
 
@@ -15,6 +16,9 @@ export default function AdminUsers() {
     // Pagination related
     const [pageNo, setPageNo] = useState(1);
     const [totalPages, setTotalPages] = useState(5);
+    // Drawer Sidebar related
+    const [isSidebarDrawerOpen, setOpen] = useState(false);
+    const toggleDrawer = (newOpen) => () => setOpen(newOpen)
 
     const user = {
         id: 1,
@@ -28,6 +32,9 @@ export default function AdminUsers() {
     return (
         <main className="App w-full h-screen flex p-[25px]">
 
+            {/* medium screen sidebar */}
+            <SideNavigationDrawer open={isSidebarDrawerOpen} toggleDrawer={toggleDrawer} user={user} />
+
             {/* Page Content */}
             <div className="w-full h-full rounded-lg shadow-md">
 
@@ -35,6 +42,9 @@ export default function AdminUsers() {
                 <div className="w-full h-[90px] flex justify-between items-center">
                     {/* Tittle */}
                     <div className="flex">
+                        <div className="lg:hidden h-[60px] ml-[20px] flex items-center cursor-pointer">
+                            <TiThMenu size={30} onClick={toggleDrawer(true)} />
+                        </div>
                         <div className="ml-[20px]">
                             <h1 className="text-[25px] font-bold">Users Page</h1>
                             <span className="text-[16px] text-gray-700">See information about all users</span>
@@ -47,7 +57,6 @@ export default function AdminUsers() {
                             ADD NEW USER
                         </button>
                     </div>
-
                 </div>
 
                 {/* second row */}
