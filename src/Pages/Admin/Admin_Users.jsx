@@ -17,9 +17,7 @@ export default function AdminUsers() {
     // tab related
     const tabs = ["Client", "Admin", "Disable"];
     const [selectedTab, setSelectedTab] = useState(tabs[0]);
-    // Pagination related
-
-    // Drawer Sidebar related
+    // Drawer Side navigation bar related
     const [isSidebarDrawerOpen, setOpen] = useState(false);
     const toggleDrawer = (newOpen) => () => setOpen(newOpen);
     // Table related
@@ -27,7 +25,6 @@ export default function AdminUsers() {
     const [isLoaded, setIsLoaded] = useState(false);
     const [pageNo, setPageNo] = useState(1);
     const [totalPages, setTotalPages] = useState(0);
-    const [recordCount, setRecordCount] = useState(7);
 
     const user = {
         id: 1,
@@ -37,6 +34,40 @@ export default function AdminUsers() {
         contactNo: "0743838490",
         emailVerification: true
     }
+
+    const defaultHeight = 910;
+    const baseRecordCount = 7;
+
+    // Initial RowCount Calculation
+    const getInitialRowCount = () => {
+        const newHeight = window.innerHeight;
+        if (newHeight > defaultHeight) {
+            const reduceHeight = newHeight - defaultHeight;
+            return baseRecordCount + Math.round(reduceHeight / 80);
+        }
+        return baseRecordCount;
+    };
+
+    const [recordCount, setRecordCount] = useState(getInitialRowCount());
+
+    // Calculating Record Count when changing window height
+    useEffect(() => {
+        const handleResize = () => {
+            const newHeight = window.innerHeight;
+            if (newHeight > defaultHeight) {
+                const reduceHeight = newHeight - defaultHeight;
+                setRecordCount(baseRecordCount + Math.round(reduceHeight / 80));
+                setIsLoaded(false)
+            } else {
+                setRecordCount(baseRecordCount);
+            }
+        };
+        window.addEventListener("resize", handleResize); // Add Event Listener
+        return () => { // Cleanup
+            window.removeEventListener("resize", handleResize);
+        };
+    }, []);
+
 
     useEffect(() => {
         if (!isLoaded) {
