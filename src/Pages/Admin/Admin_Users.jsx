@@ -1,4 +1,4 @@
-import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Avatar, Box, Typography, IconButton, Pagination } from "@mui/material";
+import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Avatar, Box, Typography, IconButton, Pagination, Skeleton } from "@mui/material";
 import { useEffect, useState } from "react";
 import { TiThMenu, TiUserAdd } from "react-icons/ti";
 import { AiOutlineSearch } from "react-icons/ai";
@@ -27,6 +27,7 @@ export default function AdminUsers() {
     const [isLoaded, setIsLoaded] = useState(false);
     const [pageNo, setPageNo] = useState(1);
     const [totalPages, setTotalPages] = useState(0);
+    const [recordCount, setRecordCount] = useState(7);
 
     const user = {
         id: 1,
@@ -40,7 +41,7 @@ export default function AdminUsers() {
     useEffect(() => {
         if (!isLoaded) {
             axios.get(`${backendUrl}/api/user`, {
-                params: { type: selectedTab, pageNo: pageNo, recordCount: 7 },
+                params: { type: selectedTab, pageNo: pageNo, recordCount: recordCount },
                 headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" }
             })
                 .then(result => {
@@ -78,7 +79,7 @@ export default function AdminUsers() {
                             <span className="text-[16px] text-gray-700">See information about all users</span>
                         </div>
                     </div>
-                    {/* Add member Button */}
+                    {/* Add user Button */}
                     <div className="mr-[20px]">
                         <button className="bg-[#212121] text-white py-[12px] px-[20px] rounded-lg text-[14px] flex items-center font-bold cursor-pointer">
                             <TiUserAdd size={20} className="mr-[15px]" />
@@ -123,37 +124,64 @@ export default function AdminUsers() {
                             </TableHead>
 
                             <TableBody>
-                                {
-                                    (Users && Users.length > 0) ?
-                                        Users.map((user, index) => {
-                                            return (
-                                                <TableRow key={index} sx={{ "&:hover": { backgroundColor: "#e8eef8" }, transition: "background-color 0.3s ease" }}>
-                                                    {/* Member column */}
-                                                    <TableCell component="th" scope="row">
-                                                        <Box display="flex" alignItems="center">
-                                                            <Avatar src={user.image} sx={{ width: 45, height: 45 }} />  {/* member image */}
-                                                            <Box sx={{ ml: 2 }}>
-                                                                <Typography fontWeight="bold" noWrap> {user.title + ". " + user.firstName + " " + user.lastName} </Typography> {/* member Name */}
-                                                                <Typography variant="body2" color="text.secondary" noWrap> {user.email} </Typography> {/* member Email */}
-                                                            </Box>
+                                {   // Table Skeleton
+                                    !isLoaded ?
+                                        Array.from({ length: recordCount }).map((_, index) => (
+                                            <TableRow key={index}>
+                                                <TableCell component="th" scope="row">
+                                                    <Box display="flex" alignItems="center">
+                                                        <Skeleton variant="circular" width={45} height={45} />
+                                                        <Box sx={{ ml: 2 }}>
+                                                            <Skeleton variant="text" width={120} />
+                                                            <Skeleton variant="text" width={160} />
                                                         </Box>
-                                                    </TableCell>
-                                                    {/* Contact Number column */}
-                                                    <TableCell align="center" > {user.contactNo} </TableCell>
-                                                    {/* Email Verification column */}
-                                                    <TableCell align="center" sx={{ display: { xs: "none", md: "table-cell" } }}><Badge type={user.emailVerified ? "success" : "warning"} message={user.emailVerified ? "Verified" : "Not Verified"} /></TableCell>
-                                                    {/* Actions column */}
-                                                    <TableCell align="center" >
-                                                        <IconButton color="primary"> <MdEdit /> </IconButton> {/* edit button */}
-                                                        <IconButton color="error"> <MdDelete /> </IconButton> {/* delete button */}
-                                                    </TableCell>
-                                                </TableRow>
-                                            )
-                                        })
-                                        :
-                                        <TableRow>
-                                            <TableCell colSpan={4} align="center">No users found</TableCell>
-                                        </TableRow>
+                                                    </Box>
+                                                </TableCell>
+                                                <TableCell align="center">
+                                                    <Skeleton variant="text" width={80} />
+                                                </TableCell>
+                                                <TableCell align="center">
+                                                    <Skeleton variant="text" width={60} />
+                                                </TableCell>
+                                                <TableCell align="center">
+                                                    <Box display="flex" justifyContent="center">
+                                                        <Skeleton variant="circular" width={40} height={40} sx={{ mr: 1 }} />
+                                                        <Skeleton variant="circular" width={40} height={40} />
+                                                    </Box>
+                                                </TableCell>
+                                            </TableRow>
+                                        ))
+                                        :  // Table Content
+                                        (Users && Users.length > 0) ?
+                                            Users.map((user, index) => {
+                                                return (
+                                                    <TableRow key={index} sx={{ "&:hover": { backgroundColor: "#e8eef8" }, transition: "background-color 0.3s ease" }}>
+                                                        {/* User column */}
+                                                        <TableCell component="th" scope="row">
+                                                            <Box display="flex" alignItems="center">
+                                                                <Avatar src={user.image} sx={{ width: 45, height: 45 }} />  {/* User image */}
+                                                                <Box sx={{ ml: 2 }}>
+                                                                    <Typography fontWeight="bold" noWrap> {user.title + ". " + user.firstName + " " + user.lastName} </Typography> {/* User Name */}
+                                                                    <Typography variant="body2" color="text.secondary" noWrap> {user.email} </Typography> {/* User Email */}
+                                                                </Box>
+                                                            </Box>
+                                                        </TableCell>
+                                                        {/* Contact Number column */}
+                                                        <TableCell align="center" > {user.contactNo} </TableCell>
+                                                        {/* Email Verification column */}
+                                                        <TableCell align="center" sx={{ display: { xs: "none", md: "table-cell" } }}><Badge type={user.emailVerified ? "success" : "warning"} message={user.emailVerified ? "Verified" : "Not Verified"} /></TableCell>
+                                                        {/* Actions column */}
+                                                        <TableCell align="center" >
+                                                            <IconButton color="primary"> <MdEdit /> </IconButton> {/* edit button */}
+                                                            <IconButton color="error"> <MdDelete /> </IconButton> {/* delete button */}
+                                                        </TableCell>
+                                                    </TableRow>
+                                                )
+                                            })
+                                            : // Empty Table
+                                            <TableRow>
+                                                <TableCell colSpan={4} align="center">No users found</TableCell>
+                                            </TableRow>
                                 }
                             </TableBody>
 
