@@ -1,4 +1,4 @@
-import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Avatar, Box, Typography, IconButton, Pagination, Skeleton } from "@mui/material";
+import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Avatar, Box, Typography, IconButton, Pagination, Skeleton, Dialog, DialogTitle, DialogContent, TextField, FormControl, Select, MenuItem, InputLabel } from "@mui/material";
 import { useEffect, useState } from "react";
 import { TiThMenu, TiUserAdd } from "react-icons/ti";
 import { AiOutlineSearch } from "react-icons/ai";
@@ -7,6 +7,7 @@ import Tabs from "../../Components/Tabs";
 import Badge from "../../Components/Badge";
 import SideNavigationDrawer from "../../Components/SideNavigationDrawer";
 import axios from "axios";
+import { IoClose } from "react-icons/io5";
 
 export default function AdminUsers() {
 
@@ -18,13 +19,15 @@ export default function AdminUsers() {
     const tabs = ["Client", "Admin", "Disable"];
     const [selectedTab, setSelectedTab] = useState(tabs[0]);
     // Drawer Side navigation bar related
-    const [isSidebarDrawerOpen, setOpen] = useState(false);
-    const toggleDrawer = (newOpen) => () => setOpen(newOpen);
+    const [isSidebarDrawerOpen, setIsSidebarDrawerOpen] = useState(false);
+    const toggleDrawer = (newOpen) => () => setIsSidebarDrawerOpen(newOpen);
     // Table related
     const [Users, setUsers] = useState([]);
     const [isLoaded, setIsLoaded] = useState(false);
     const [pageNo, setPageNo] = useState(1);
     const [totalPages, setTotalPages] = useState(0);
+
+    const [isDialogOpen, setIsDialogOpen] = useState(false);
 
     const user = {
         id: 1,
@@ -48,6 +51,7 @@ export default function AdminUsers() {
         return baseRecordCount;
     };
 
+    // Add and Update user Dialog related
     const [recordCount, setRecordCount] = useState(getInitialRowCount());
 
     // Calculating Record Count when changing window height
@@ -68,7 +72,7 @@ export default function AdminUsers() {
         };
     }, []);
 
-
+    // retrieve Record
     useEffect(() => {
         if (!isLoaded) {
             axios.get(`${backendUrl}/api/user`, {
@@ -112,7 +116,7 @@ export default function AdminUsers() {
                     </div>
                     {/* Add user Button */}
                     <div className="mr-[20px]">
-                        <button className="bg-[#212121] text-white py-[12px] px-[20px] rounded-lg text-[14px] flex items-center font-bold cursor-pointer">
+                        <button className="bg-[#212121] text-white py-[12px] px-[20px] rounded-lg text-[14px] flex items-center font-bold cursor-pointer" onClick={() => setIsDialogOpen(true)}>
                             <TiUserAdd size={20} className="mr-[15px]" />
                             ADD NEW USER
                         </button>
@@ -235,6 +239,54 @@ export default function AdminUsers() {
                 </div>
 
             </div>
+
+            {/* Add and Update user Dialog */}
+            <Dialog open={isDialogOpen} >
+
+                <div className="flex justify-between items-center">
+                    <DialogTitle> Add New User </DialogTitle>
+                    <IconButton style={{ marginRight: "10px" }} onClick={() => setIsDialogOpen(false)}> <IoClose /> </IconButton>
+                </div>
+
+                <DialogContent dividers>
+
+                    <div className="flex">
+                        <TextField style={{ width: "200px" }} label="First Name" variant="outlined" />
+                        <TextField style={{ width: "200px", marginLeft: "10px" }} label="Last Name" variant="outlined" />
+                    </div>
+
+                    <div className="mb-[15px]">
+                        <TextField style={{ width: "410px", marginTop: "15px" }} label="Email" variant="outlined" />
+                    </div>
+
+                    <div className="flex mb-[15px]">
+                        <TextField style={{ width: "200px" }} label="Contact No." variant="outlined" />
+                        <TextField style={{ width: "200px", marginLeft: "10px" }} label="Password" variant="outlined" />
+                    </div>
+
+                    <div className="flex mb-[15px]">
+                        <FormControl style={{ width: "200px" }}>
+                            <InputLabel>Gender</InputLabel>
+                            <Select label="Gender">
+                                <MenuItem value="Mr">Male</MenuItem>
+                                <MenuItem value="Ms">Female</MenuItem>
+                            </Select>
+                        </FormControl>
+
+                        <FormControl style={{ width: "200px", marginLeft: "10px" }}>
+                            <InputLabel>Type</InputLabel>
+                            <Select label="Type">
+                                <MenuItem value="Admin">Admin</MenuItem>
+                                <MenuItem value="Client">Client</MenuItem>
+                            </Select>
+                        </FormControl>
+                    </div>
+
+                    <button className="w-full h-[45px] rounded-md bg-[#303030] text-white mb-[5px] font-bold cursor-pointer">Add New User</button>
+
+                </DialogContent>
+
+            </Dialog>
 
         </main>
     )
