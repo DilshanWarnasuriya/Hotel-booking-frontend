@@ -1,5 +1,5 @@
 
-export default function Tabs({ tabs, activeTab, setActiveTab }) {
+export default function Tabs({ tabs, selectedTab, setSelectedTab, setIsLoaded }) {
   return (
     <div className="h-[40px] p-[4px] border flex border-gray-400 rounded-lg">
       {
@@ -7,8 +7,11 @@ export default function Tabs({ tabs, activeTab, setActiveTab }) {
           return (
             <button
               key={tabName}
-              className={`px-[25px] text-center rounded-lg transition duration-500 cursor-pointer ${activeTab == tabName ? "bg-[#e8eef8]" : "bg-white"}`}
-              onClick={() => setActiveTab(tabName)}>
+              className={`px-[25px] text-center rounded-lg transition duration-500 cursor-pointer ${selectedTab == tabName ? "bg-[#e8eef8]" : "bg-white"}`}
+              onClick={() => {
+                setSelectedTab(tabName);
+                setIsLoaded(false)
+              }}>
               {tabName}
             </button>
           )

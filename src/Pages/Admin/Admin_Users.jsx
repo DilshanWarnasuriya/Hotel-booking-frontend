@@ -1,24 +1,32 @@
 import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Avatar, Box, Typography, IconButton, Pagination } from "@mui/material";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { TiThMenu, TiUserAdd } from "react-icons/ti";
 import { AiOutlineSearch } from "react-icons/ai";
 import { MdEdit, MdDelete } from "react-icons/md";
 import Tabs from "../../Components/Tabs";
 import Badge from "../../Components/Badge";
 import SideNavigationDrawer from "../../Components/SideNavigationDrawer";
+import axios from "axios";
 
 export default function AdminUsers() {
 
+    const backendUrl = import.meta.env.VITE_BACKEND_URL;
+    const token = import.meta.env.VITE_TOKEN
+
     const [searchValue, setSearchValue] = useState("");
     // tab related
-    const tabs = ["Clients", "Admins", "Disable"];
-    const [activeTab, setActiveTab] = useState(tabs[0]);
+    const tabs = ["Client", "Admin", "Disable"];
+    const [selectedTab, setSelectedTab] = useState(tabs[0]);
     // Pagination related
-    const [pageNo, setPageNo] = useState(1);
-    const [totalPages, setTotalPages] = useState(5);
+
     // Drawer Sidebar related
     const [isSidebarDrawerOpen, setOpen] = useState(false);
-    const toggleDrawer = (newOpen) => () => setOpen(newOpen)
+    const toggleDrawer = (newOpen) => () => setOpen(newOpen);
+    // Table related
+    const [Users, setUsers] = useState([]);
+    const [isLoaded, setIsLoaded] = useState(false);
+    const [pageNo, setPageNo] = useState(1);
+    const [totalPages, setTotalPages] = useState(0);
 
     const user = {
         id: 1,
@@ -28,6 +36,26 @@ export default function AdminUsers() {
         contactNo: "0743838490",
         emailVerification: true
     }
+
+    useEffect(() => {
+        if (!isLoaded) {
+            axios.get(`${backendUrl}/api/user`, {
+                params: { type: selectedTab, pageNo: pageNo, recordCount: 7 },
+                headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" }
+            })
+                .then(result => {
+                    setUsers(result.data.users);
+                    setTotalPages(result.data.totalPage);
+                    setIsLoaded(true);
+                })
+                .catch(error => {
+                    setUsers([]);
+                    setIsLoaded(true);
+                    console.log(error.message);
+                })
+        }
+    }, [isLoaded])
+
 
     return (
         <main className="App w-full h-screen flex p-[25px]">
@@ -63,7 +91,7 @@ export default function AdminUsers() {
                 <div className="w-full h-[90px] flex justify-between items-center bg-red-">
                     {/* Tabs */}
                     <div className="ml-[20px]">
-                        <Tabs tabs={tabs} activeTab={activeTab} setActiveTab={setActiveTab} />
+                        <Tabs tabs={tabs} selectedTab={selectedTab} setSelectedTab={setSelectedTab} setIsLoaded={setIsLoaded} />
                     </div>
                     {/* Search */}
                     <div className="mr-[20px]">
@@ -95,27 +123,38 @@ export default function AdminUsers() {
                             </TableHead>
 
                             <TableBody>
-                                <TableRow key={user.id} sx={{ "&:hover": { backgroundColor: "#e8eef8" }, transition: "background-color 0.3s ease" }}>
-                                    {/* Member column */}
-                                    <TableCell component="th" scope="row">
-                                        <Box display="flex" alignItems="center">
-                                            <Avatar src={user.image} sx={{ width: 45, height: 45 }} />  {/* member image */}
-                                            <Box sx={{ ml: 2 }}>
-                                                <Typography fontWeight="bold" noWrap> {user.name} </Typography> {/* member Name */}
-                                                <Typography variant="body2" color="text.secondary" noWrap> {user.email} </Typography> {/* member Email */}
-                                            </Box>
-                                        </Box>
-                                    </TableCell>
-                                    {/* Contact Number column */}
-                                    <TableCell align="center" > {user.contactNo} </TableCell>
-                                    {/* Email Verification column */}
-                                    <TableCell align="center" sx={{ display: { xs: "none", md: "table-cell" } }}><Badge type={user.emailVerification ? "success" : "warning"} message={user.emailVerification ? "Verified" : "Not Verified"} /></TableCell>
-                                    {/* Actions column */}
-                                    <TableCell align="center" >
-                                        <IconButton color="primary"> <MdEdit /> </IconButton> {/* edit button */}
-                                        <IconButton color="error"> <MdDelete /> </IconButton> {/* delete button */}
-                                    </TableCell>
-                                </TableRow>
+                                {
+                                    (Users && Users.length > 0) ?
+                                        Users.map((user, index) => {
+                                            return (
+                                                <TableRow key={index} sx={{ "&:hover": { backgroundColor: "#e8eef8" }, transition: "background-color 0.3s ease" }}>
+                                                    {/* Member column */}
+                                                    <TableCell component="th" scope="row">
+                                                        <Box display="flex" alignItems="center">
+                                                            <Avatar src={user.image} sx={{ width: 45, height: 45 }} />  {/* member image */}
+                                                            <Box sx={{ ml: 2 }}>
+                                                                <Typography fontWeight="bold" noWrap> {user.title + ". " + user.firstName + " " + user.lastName} </Typography> {/* member Name */}
+                                                                <Typography variant="body2" color="text.secondary" noWrap> {user.email} </Typography> {/* member Email */}
+                                                            </Box>
+                                                        </Box>
+                                                    </TableCell>
+                                                    {/* Contact Number column */}
+                                                    <TableCell align="center" > {user.contactNo} </TableCell>
+                                                    {/* Email Verification column */}
+                                                    <TableCell align="center" sx={{ display: { xs: "none", md: "table-cell" } }}><Badge type={user.emailVerified ? "success" : "warning"} message={user.emailVerified ? "Verified" : "Not Verified"} /></TableCell>
+                                                    {/* Actions column */}
+                                                    <TableCell align="center" >
+                                                        <IconButton color="primary"> <MdEdit /> </IconButton> {/* edit button */}
+                                                        <IconButton color="error"> <MdDelete /> </IconButton> {/* delete button */}
+                                                    </TableCell>
+                                                </TableRow>
+                                            )
+                                        })
+                                        :
+                                        <TableRow>
+                                            <TableCell colSpan={4} align="center">No users found</TableCell>
+                                        </TableRow>
+                                }
                             </TableBody>
 
                         </Table>
@@ -127,7 +166,10 @@ export default function AdminUsers() {
                     <Pagination
                         page={pageNo}
                         count={totalPages}
-                        onChange={(event, value) => setPageNo(value)}
+                        onChange={(event, value) => {
+                            setPageNo(value);
+                            setIsLoaded(false);
+                        }}
                         variant="outlined"
                         color="primary"
                     />
