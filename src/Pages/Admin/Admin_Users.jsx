@@ -138,7 +138,8 @@ export default function AdminUsers({ loggedUser }) {
             })
     }
 
-    function findByContactNo(contactNo, calling) {
+    // Find By ContactNo
+    function findByContactNo(contactNo, purpose) {
         if (!contactNoRegex.test(contactNo)) {
             setAlertMessage("Please Enter Valid Contact Number")
             setIsAlertOpen(true);
@@ -147,11 +148,8 @@ export default function AdminUsers({ loggedUser }) {
 
         axios.get(`${backendUrl}/api/user/contactNo/${contactNo}`, { headers: { Authorization: `Bearer ${token}` } })
             .then(result => {
-                if (calling == "search") {
+                if (purpose == "search") {
                     setUsers([result.data.user]);
-                    setAlertType("success")
-                    setAlertMessage(result.data.message)
-                    setIsAlertOpen(true);
                 }
                 else {
                     setUser(result.data.user);
@@ -161,7 +159,8 @@ export default function AdminUsers({ loggedUser }) {
                 setSearchValue("")
             })
             .catch(error => {
-                setAlertMessage(error.message)
+                setAlertType("error")
+                setAlertMessage(error.response.data.message)
                 setIsAlertOpen(true);
             })
     }
