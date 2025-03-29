@@ -1,4 +1,4 @@
-import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Avatar, Box, Typography, IconButton, Pagination, Skeleton, Dialog, DialogTitle, DialogContent, TextField, FormControl, Select, MenuItem, InputLabel } from "@mui/material";
+import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Avatar, Box, Typography, IconButton, Pagination, Skeleton, Dialog, DialogTitle, DialogContent, TextField, FormControl, Select, MenuItem, InputLabel, FormHelperText } from "@mui/material";
 import { useEffect, useState } from "react";
 import { TiThMenu, TiUserAdd } from "react-icons/ti";
 import { AiOutlineSearch } from "react-icons/ai";
@@ -9,37 +9,14 @@ import SideNavigationDrawer from "../../Components/SideNavigationDrawer";
 import axios from "axios";
 import { IoClose } from "react-icons/io5";
 
-export default function AdminUsers() {
+export default function AdminUsers({ loggedUser }) {
 
     const backendUrl = import.meta.env.VITE_BACKEND_URL;
     const token = import.meta.env.VITE_TOKEN
-
-    const [searchValue, setSearchValue] = useState("");
-    // tab related
-    const tabs = ["Client", "Admin", "Disable"];
-    const [selectedTab, setSelectedTab] = useState(tabs[0]);
-    // Drawer Side navigation bar related
-    const [isSidebarDrawerOpen, setIsSidebarDrawerOpen] = useState(false);
-    const toggleDrawer = (newOpen) => () => setIsSidebarDrawerOpen(newOpen);
-    // Table related
-    const [Users, setUsers] = useState([]);
-    const [isLoaded, setIsLoaded] = useState(false);
-    const [pageNo, setPageNo] = useState(1);
-    const [totalPages, setTotalPages] = useState(0);
-
-    const [isDialogOpen, setIsDialogOpen] = useState(false);
-
-    const user = {
-        id: 1,
-        image: "https://media.istockphoto.com/id/870079648/photo/seeing-things-in-a-positive-light.jpg?s=170667a&w=0&k=20&c=0p7KCODmXjvX-9JkkrHg9SPL0zojHb_8ygOfPylt3W8=",
-        name: "Mr. Yashoda Dilshan",
-        email: "yashodadilshan@gmail.com",
-        contactNo: "0743838490",
-        emailVerification: true
-    }
-
     const defaultHeight = 910;
     const baseRecordCount = 7;
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    const contactNoRegex = /^0\d{9}$/;
 
     // Initial RowCount Calculation
     const getInitialRowCount = () => {
@@ -51,8 +28,25 @@ export default function AdminUsers() {
         return baseRecordCount;
     };
 
+    const [searchValue, setSearchValue] = useState("");
+    // tab related
+    const tabs = ["Client", "Admin", "Disable"];
+    const [selectedTab, setSelectedTab] = useState(tabs[0]);
+    // Drawer Side navigation bar related
+    const [isSidebarDrawerOpen, setIsSidebarDrawerOpen] = useState(false);
+    const toggleDrawer = (newOpen) => () => setIsSidebarDrawerOpen(newOpen);
+    // Table related
+    const [users, setUsers] = useState([]);
+    const [isLoaded, setIsLoaded] = useState(false);
+    const [pageNo, setPageNo] = useState(1);
+    const [totalPages, setTotalPages] = useState(0);
+    const [recordCount, setRecordCount] = useState(getInitialRowCount()); // table record count
     // Add and Update user Dialog related
-    const [recordCount, setRecordCount] = useState(getInitialRowCount());
+    const [isDialogOpen, setIsDialogOpen] = useState(false);
+    const [dialogTitle, setDialogTitle] = useState("");
+    const initialUser = { title: "", firstName: "", lastName: "", email: "", contactNo: "", password: "", type: "", disabled: false }; // User structure
+    const [user, setUser] = useState(initialUser);
+    const [isButtonClicked, setIsButtonClicked] = useState(false);
 
     // Calculating Record Count when changing window height
     useEffect(() => {
@@ -92,12 +86,17 @@ export default function AdminUsers() {
         }
     }, [isLoaded])
 
+    // handle all inputs in dialog
+    function handleInputChange(e) {
+        const { name, value } = e.target;
+        setUser(prev => ({ ...prev, [name]: value }))
+    }
 
     return (
         <main className="App w-full h-screen flex p-[25px]">
 
             {/* medium screen sidebar */}
-            <SideNavigationDrawer open={isSidebarDrawerOpen} toggleDrawer={toggleDrawer} user={user} />
+            <SideNavigationDrawer open={isSidebarDrawerOpen} toggleDrawer={toggleDrawer} loggedUser={loggedUser} />
 
             {/* Page Content */}
             <div className="w-full h-full rounded-lg shadow-md">
@@ -116,8 +115,14 @@ export default function AdminUsers() {
                     </div>
                     {/* Add user Button */}
                     <div className="mr-[20px]">
-                        <button className="bg-[#212121] text-white py-[12px] px-[20px] rounded-lg text-[14px] flex items-center font-bold cursor-pointer" onClick={() => setIsDialogOpen(true)}>
-                            <TiUserAdd size={20} className="mr-[15px]" />
+                        <button className="bg-[#212121] text-white py-[12px] px-[20px] rounded-lg text-[14px] flex items-center font-bold cursor-pointer"
+                            onClick={() => {
+                                setUser(initialUser);
+                                setIsButtonClicked(false);
+                                setDialogTitle("Add New User");
+                                setIsDialogOpen(true);
+                            }}>
+                            <TiUserAdd size={20} className="mr-[15px]" />  {/* icon */}
                             ADD NEW USER
                         </button>
                     </div>
@@ -151,7 +156,7 @@ export default function AdminUsers() {
 
                             <TableHead>
                                 <TableRow sx={{ backgroundColor: "#f5f5f5" }}>
-                                    <TableCell sx={{ backgroundColor: "#f5f5f5", fontWeight: "bold", position: "sticky", top: 0, zIndex: 1 }}>Users</TableCell>
+                                    <TableCell sx={{ backgroundColor: "#f5f5f5", fontWeight: "bold", position: "sticky", top: 0, zIndex: 1 }}>users</TableCell>
                                     <TableCell align="center" sx={{ backgroundColor: "#f5f5f5", fontWeight: "bold", position: "sticky", top: 0, zIndex: 1 }}>Contact Number</TableCell>
                                     <TableCell align="center" sx={{ backgroundColor: "#f5f5f5", fontWeight: "bold", position: "sticky", top: 0, zIndex: 1, display: { xs: "none", md: "table-cell" } }}>Email Verification</TableCell>
                                     <TableCell align="center" sx={{ backgroundColor: "#f5f5f5", fontWeight: "bold", position: "sticky", top: 0, zIndex: 1 }}>Actions</TableCell>
@@ -187,24 +192,24 @@ export default function AdminUsers() {
                                             </TableRow>
                                         ))
                                         :  // Table Content
-                                        (Users && Users.length > 0) ?
-                                            Users.map((user, index) => {
+                                        (users && users.length > 0) ?
+                                            users.map((element, index) => {
                                                 return (
                                                     <TableRow key={index} sx={{ "&:hover": { backgroundColor: "#e8eef8" }, transition: "background-color 0.3s ease" }}>
                                                         {/* User column */}
                                                         <TableCell component="th" scope="row">
                                                             <Box display="flex" alignItems="center">
-                                                                <Avatar src={user.image} sx={{ width: 45, height: 45 }} />  {/* User image */}
+                                                                <Avatar src={element.image} sx={{ width: 45, height: 45 }} />  {/* User image */}
                                                                 <Box sx={{ ml: 2 }}>
-                                                                    <Typography fontWeight="bold" noWrap> {user.title + ". " + user.firstName + " " + user.lastName} </Typography> {/* User Name */}
-                                                                    <Typography variant="body2" color="text.secondary" noWrap> {user.email} </Typography> {/* User Email */}
+                                                                    <Typography fontWeight="bold" noWrap> {element.title + ". " + element.firstName + " " + element.lastName} </Typography> {/* User Name */}
+                                                                    <Typography variant="body2" color="text.secondary" noWrap> {element.email} </Typography> {/* User Email */}
                                                                 </Box>
                                                             </Box>
                                                         </TableCell>
                                                         {/* Contact Number column */}
-                                                        <TableCell align="center" > {user.contactNo} </TableCell>
+                                                        <TableCell align="center" > {element.contactNo} </TableCell>
                                                         {/* Email Verification column */}
-                                                        <TableCell align="center" sx={{ display: { xs: "none", md: "table-cell" } }}><Badge type={user.emailVerified ? "success" : "warning"} message={user.emailVerified ? "Verified" : "Not Verified"} /></TableCell>
+                                                        <TableCell align="center" sx={{ display: { xs: "none", md: "table-cell" } }}><Badge type={element.emailVerified ? "success" : "warning"} message={element.emailVerified ? "Verified" : "Not Verified"} /></TableCell>
                                                         {/* Actions column */}
                                                         <TableCell align="center" >
                                                             <IconButton color="primary"> <MdEdit /> </IconButton> {/* edit button */}
@@ -244,45 +249,113 @@ export default function AdminUsers() {
             <Dialog open={isDialogOpen} >
 
                 <div className="flex justify-between items-center">
-                    <DialogTitle> Add New User </DialogTitle>
+                    <DialogTitle> {dialogTitle} </DialogTitle>
                     <IconButton style={{ marginRight: "10px" }} onClick={() => setIsDialogOpen(false)}> <IoClose /> </IconButton>
                 </div>
 
                 <DialogContent dividers>
 
                     <div className="flex">
-                        <TextField style={{ width: "200px" }} label="First Name" variant="outlined" />
-                        <TextField style={{ width: "200px", marginLeft: "10px" }} label="Last Name" variant="outlined" />
+                        <TextField
+                            name="firstName"
+                            label="First Name"
+                            variant="outlined"
+                            style={{ width: "200px" }}
+                            value={user.firstName}
+                            onChange={handleInputChange}
+                            error={isButtonClicked && user.firstName.length < 4}
+                            helperText={`${isButtonClicked && user.firstName.length < 4 ? "Enter more than 3 characters" : ""}`}
+                        />
+
+                        <TextField
+                            style={{ width: "200px", marginLeft: "10px" }}
+                            name="lastName"
+                            label="Last Name"
+                            variant="outlined"
+                            value={user.lastName}
+                            onChange={handleInputChange}
+                            error={isButtonClicked && user.lastName.length < 4}
+                            helperText={`${isButtonClicked && user.lastName.length < 4 ? "Enter more than 3 characters" : ""}`}
+                        />
                     </div>
 
                     <div className="mb-[15px]">
-                        <TextField style={{ width: "410px", marginTop: "15px" }} label="Email" variant="outlined" />
+                        <TextField
+                            name="email"
+                            label="Email"
+                            variant="outlined"
+                            style={{ width: "410px", marginTop: "15px" }}
+                            value={user.email}
+                            onChange={handleInputChange}
+                            error={isButtonClicked && !emailRegex.test(user.email)}
+                            helperText={`${isButtonClicked && !emailRegex.test(user.email) ? "Enter Valid Email address" : ""}`}
+                        />
                     </div>
 
                     <div className="flex mb-[15px]">
-                        <TextField style={{ width: "200px" }} label="Contact No." variant="outlined" />
-                        <TextField style={{ width: "200px", marginLeft: "10px" }} label="Password" variant="outlined" />
+                        <TextField
+                            style={{ width: "200px" }}
+                            name="contactNo"
+                            label="Contact No."
+                            variant="outlined"
+                            value={user.contactNo}
+                            onChange={handleInputChange}
+                            error={isButtonClicked && user.contactNo.length < 4}
+                            helperText={`${isButtonClicked && !contactNoRegex.test(user.contactNo) ? "Enter Valid Contact No." : ""}`}
+                        />
+
+                        <TextField
+                            style={{ width: "200px", marginLeft: "10px" }}
+                            name="password"
+                            label="Password"
+                            variant="outlined"
+                            value={user.password}
+                            onChange={handleInputChange}
+                            error={isButtonClicked && user.password.length < 8}
+                            helperText={`${isButtonClicked && user.password.length < 8 ? "Enter more than 8 characters" : ""}`}
+                        />
+
                     </div>
 
                     <div className="flex mb-[15px]">
                         <FormControl style={{ width: "200px" }}>
-                            <InputLabel>Gender</InputLabel>
-                            <Select label="Gender">
+                            <InputLabel error={isButtonClicked && user.title == ""}>Gender</InputLabel>
+                            <Select
+                                name="title"
+                                label="Gender"
+                                value={user.title}
+                                onChange={handleInputChange}
+                                error={isButtonClicked && user.title == ""}
+                            >
                                 <MenuItem value="Mr">Male</MenuItem>
                                 <MenuItem value="Ms">Female</MenuItem>
                             </Select>
+                            <FormHelperText error>{isButtonClicked && user.title == "" ? "Select User title" : ""}</FormHelperText>
                         </FormControl>
 
                         <FormControl style={{ width: "200px", marginLeft: "10px" }}>
-                            <InputLabel>Type</InputLabel>
-                            <Select label="Type">
+                            <InputLabel error={isButtonClicked && user.type == ""} >Type</InputLabel>
+                            <Select
+                                name="type"
+                                label="Type"
+                                value={user.type}
+                                onChange={handleInputChange}
+                                error={isButtonClicked && user.type == ""}
+                            >
                                 <MenuItem value="Admin">Admin</MenuItem>
                                 <MenuItem value="Client">Client</MenuItem>
                             </Select>
+                            <FormHelperText error>{isButtonClicked && user.type == "" ? "Select User Type" : ""}</FormHelperText>
                         </FormControl>
                     </div>
 
-                    <button className="w-full h-[45px] rounded-md bg-[#303030] text-white mb-[5px] font-bold cursor-pointer">Add New User</button>
+                    <button
+                        className="w-full h-[45px] rounded-md bg-[#303030] text-white mb-[5px] font-bold cursor-pointer"
+                        onClick={() => {
+                            setIsButtonClicked(true);
+                        }}
+                    > Add New User
+                    </button>
 
                 </DialogContent>
 

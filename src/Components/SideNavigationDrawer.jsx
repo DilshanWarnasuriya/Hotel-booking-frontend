@@ -8,7 +8,7 @@ import { MdCategory, MdOutlineRateReview } from "react-icons/md";
 import { TbBrandBooking } from "react-icons/tb";
 import { Link, useLocation } from "react-router-dom";
 
-export default function SideNavigationDrawer({ open, toggleDrawer, user }) {
+export default function SideNavigationDrawer({ open, toggleDrawer, loggedUser }) {
 
     const location = useLocation();
     const currentUrl = location.pathname;
@@ -69,15 +69,15 @@ export default function SideNavigationDrawer({ open, toggleDrawer, user }) {
                     </Link>
                 </div>
 
-                {/* user details */}
+                {/* loggedUser details */}
                 <div className="w-[100%] flex justify-center items-center absolute bottom-[10px] border-t border-gray-400">
                     <div className="w-[90%] h-[60px] flex items-center py-3 mt-[10px]">
                         {/* User image */}
                         <img src="https://artbreeder.b-cdn.net/imgs/2909c8ae929707ef54ef39e1945e.jpeg" className="w-[45px] h-[45px] rounded-full" />
                         {/* User details */}
                         <div className="ml-3 flex flex-col">
-                            <span className="w-[180px] h-[25px] text-gray-900 overflow-hidden font-semibold">{user.name}</span>
-                            <span className="w-[170px] h-[20px] text-gray-500 overflow-hidden text-sm ">{user.email}</span>
+                            <span className="w-[180px] h-[25px] text-gray-900 overflow-hidden font-semibold">{loggedUser.name}</span>
+                            <span className="w-[170px] h-[20px] text-gray-500 overflow-hidden text-sm ">{loggedUser.email}</span>
                         </div>
                         {/* Options Button */}
                         <div className="relative">
