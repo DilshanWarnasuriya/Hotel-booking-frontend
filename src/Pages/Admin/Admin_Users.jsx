@@ -1,4 +1,4 @@
-import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Avatar, Box, Typography, IconButton, Pagination, Skeleton, Dialog, DialogTitle, DialogContent, TextField, FormControl, Select, MenuItem, InputLabel, FormHelperText } from "@mui/material";
+import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Avatar, Box, Typography, IconButton, Pagination, Skeleton, Dialog, DialogTitle, DialogContent, TextField, FormControl, Select, MenuItem, InputLabel, FormHelperText, Button } from "@mui/material";
 import { useEffect, useState } from "react";
 import { TiThMenu, TiUserAdd } from "react-icons/ti";
 import { AiOutlineSearch } from "react-icons/ai";
@@ -8,6 +8,16 @@ import Badge from "../../Components/Badge";
 import SideNavigationDrawer from "../../Components/SideNavigationDrawer";
 import axios from "axios";
 import { IoClose } from "react-icons/io5";
+import { Tailspin } from 'ldrs/react'
+import 'ldrs/react/Tailspin.css'
+
+// Default values shown
+<Tailspin
+    size="40"
+    stroke="5"
+    speed="0.9"
+    color="black"
+/>
 
 export default function AdminUsers({ loggedUser }) {
 
@@ -47,6 +57,7 @@ export default function AdminUsers({ loggedUser }) {
     const initialUser = { title: "", firstName: "", lastName: "", email: "", contactNo: "", password: "", type: "", disabled: false }; // User structure
     const [user, setUser] = useState(initialUser);
     const [isButtonClicked, setIsButtonClicked] = useState(false);
+    const [isButtonLoading, setIsButtonLoading] = useState(false);
 
     // Calculating Record Count when changing window height
     useEffect(() => {
@@ -90,6 +101,27 @@ export default function AdminUsers({ loggedUser }) {
     function handleInputChange(e) {
         const { name, value } = e.target;
         setUser(prev => ({ ...prev, [name]: value }))
+    }
+
+    // Add new User
+    function persist() {
+        setIsButtonClicked(true);
+
+        if (user.title == "" || user.firstName < 4 || user.lastName < 4 || !emailRegex.test(user.email) || !contactNoRegex.test(user.contactNo) || user.password < 8 || user.type == "") {
+            return
+        }
+
+        setIsButtonLoading(true);
+        axios.post(`${backendUrl}/api/user`, user)
+            .then(result => {
+                console.log(result.data.message)
+                setIsDialogOpen(false);
+                setIsLoaded(false);
+            })
+            .catch(error => {
+                setIsButtonLoading(false);
+                console.log(error.message)
+            })
     }
 
     return (
@@ -349,13 +381,23 @@ export default function AdminUsers({ loggedUser }) {
                         </FormControl>
                     </div>
 
-                    <button
-                        className="w-full h-[45px] rounded-md bg-[#303030] text-white mb-[5px] font-bold cursor-pointer"
-                        onClick={() => {
-                            setIsButtonClicked(true);
-                        }}
-                    > Add New User
-                    </button>
+                    {/* button  */}
+                    <div>
+                        {
+                            isButtonLoading
+                                ?
+                                <button className="w-full h-[45px] rounded-md bg-[#303030b7] text-white mb-[5px] font-bold flex justify-center items-center">
+                                    <Tailspin size="20" stroke="3" speed="0.9" color="white" />
+                                    <span className="ml-[10px]">Loading....</span>
+                                </button>
+                                :
+                                <button
+                                    className="w-full h-[45px] rounded-md bg-[#303030] text-white mb-[5px] font-bold cursor-pointer"
+                                    onClick={persist}
+                                > {dialogTitle}
+                                </button>
+                        }
+                    </div>
 
                 </DialogContent>
 
