@@ -10,6 +10,7 @@ import axios from "axios";
 import { IoClose } from "react-icons/io5";
 import { Tailspin } from 'ldrs/react'
 import 'ldrs/react/Tailspin.css'
+import Alert from "../../Components/Alert";
 
 // Default values shown
 <Tailspin
@@ -59,6 +60,10 @@ export default function AdminUsers({ loggedUser }) {
     const [isButtonClicked, setIsButtonClicked] = useState(false);
     const [isButtonLoading, setIsButtonLoading] = useState(false);
 
+    const [isAlertOpen, setIsAlertOpen] = useState(false);
+    const [alertType, setAlertType] = useState("");
+    const [alertMessage, setAlertMessage] = useState("");
+
     // Calculating Record Count when changing window height
     useEffect(() => {
         const handleResize = () => {
@@ -92,7 +97,8 @@ export default function AdminUsers({ loggedUser }) {
                 .catch(error => {
                     setUsers([]);
                     setIsLoaded(true);
-                    console.log(error.message);
+                    setAlertMessage(error.message)
+                    setIsAlertOpen(true);
                 })
         }
     }, [isLoaded])
@@ -114,13 +120,15 @@ export default function AdminUsers({ loggedUser }) {
         setIsButtonLoading(true);
         axios.post(`${backendUrl}/api/user`, user)
             .then(result => {
-                console.log(result.data.message)
                 setIsDialogOpen(false);
+                setAlertType("success")
+                setAlertMessage(result.data.message)
+                setIsAlertOpen(true);
                 setIsLoaded(false);
             })
             .catch(error => {
-                setIsButtonLoading(false);
-                console.log(error.message)
+                setAlertMessage(error.message)
+                setIsAlertOpen(true);
             })
     }
 
@@ -402,6 +410,9 @@ export default function AdminUsers({ loggedUser }) {
                 </DialogContent>
 
             </Dialog>
+
+            {/* To display success messages and error messages */}
+            <Alert isAlertOpen={isAlertOpen} type={alertType} message={alertMessage} setIsAlertOpen={setIsAlertOpen} />
 
         </main>
     )
