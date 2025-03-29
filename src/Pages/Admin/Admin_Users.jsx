@@ -1,4 +1,4 @@
-import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Avatar, Box, Typography, IconButton, Pagination, Skeleton, Dialog, DialogTitle, DialogContent, TextField, FormControl, Select, MenuItem, InputLabel, FormHelperText, Button } from "@mui/material";
+import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Avatar, Box, Typography, IconButton, Pagination, Skeleton, Dialog, DialogTitle, DialogContent, TextField, FormControl, Select, MenuItem, InputLabel, FormHelperText } from "@mui/material";
 import { useEffect, useState } from "react";
 import { TiThMenu, TiUserAdd } from "react-icons/ti";
 import { AiOutlineSearch } from "react-icons/ai";
@@ -11,14 +11,6 @@ import { IoClose } from "react-icons/io5";
 import { Tailspin } from 'ldrs/react'
 import 'ldrs/react/Tailspin.css'
 import Alert from "../../Components/Alert";
-
-// Default values shown
-<Tailspin
-    size="40"
-    stroke="5"
-    speed="0.9"
-    color="black"
-/>
 
 export default function AdminUsers({ loggedUser }) {
 
@@ -128,7 +120,7 @@ export default function AdminUsers({ loggedUser }) {
                 setIsAlertOpen(true);
                 setIsLoaded(false);
                 setIsButtonLoading(false);
-                
+
             })
             .catch(error => {
                 setIsButtonLoading(false);
@@ -143,6 +135,34 @@ export default function AdminUsers({ loggedUser }) {
                     setAlertMessage(error.response.data.message)
                     setIsAlertOpen(true);
                 }
+            })
+    }
+
+    function findByContactNo(contactNo, calling) {
+        if (!contactNoRegex.test(contactNo)) {
+            setAlertMessage("Please Enter Valid Contact Number")
+            setIsAlertOpen(true);
+            return
+        }
+
+        axios.get(`${backendUrl}/api/user/contactNo/${contactNo}`, { headers: { Authorization: `Bearer ${token}` } })
+            .then(result => {
+                if (calling == "search") {
+                    setUsers([result.data.user]);
+                    setAlertType("success")
+                    setAlertMessage(result.data.message)
+                    setIsAlertOpen(true);
+                }
+                else {
+                    setUser(result.data.user);
+                    setDialogTitle("Edit User");
+                    setIsDialogOpen(true);
+                }
+                setSearchValue("")
+            })
+            .catch(error => {
+                setAlertMessage(error.message)
+                setIsAlertOpen(true);
             })
     }
 
@@ -199,6 +219,7 @@ export default function AdminUsers({ loggedUser }) {
                                 className="w-full h-10 pl-10 pr-4 border border-gray-600 rounded-lg text-gray-900 outline-none transition-all placeholder-gray-600"
                                 value={searchValue}
                                 onChange={(e) => setSearchValue(e.target.value)}
+                                onKeyDown={(e) => e.key === "Enter" ? findByContactNo(searchValue, "search") : ""}
                             />
                         </div>
                     </div>
@@ -267,7 +288,7 @@ export default function AdminUsers({ loggedUser }) {
                                                         <TableCell align="center" sx={{ display: { xs: "none", md: "table-cell" } }}><Badge type={element.emailVerified ? "success" : "warning"} message={element.emailVerified ? "Verified" : "Not Verified"} /></TableCell>
                                                         {/* Actions column */}
                                                         <TableCell align="center" >
-                                                            <IconButton color="primary" onClick={() => findByContactNo(element.contactNo)}> <MdEdit /> </IconButton> {/* edit button */}
+                                                            <IconButton color="primary" onClick={() => findByContactNo(element.contactNo, "edit")}> <MdEdit /> </IconButton> {/* edit button */}
                                                             <IconButton color="error"> <MdDelete /> </IconButton> {/* delete button */}
                                                         </TableCell>
                                                     </TableRow>
