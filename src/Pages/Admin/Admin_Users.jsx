@@ -57,6 +57,7 @@ export default function AdminUsers({ loggedUser }) {
     const [dialogTitle, setDialogTitle] = useState("");
     const initialUser = { title: "", firstName: "", lastName: "", email: "", contactNo: "", password: "", type: "", disabled: false }; // User structure
     const [user, setUser] = useState(initialUser);
+    const [userError, setUserError] = useState("");
     const [isButtonClicked, setIsButtonClicked] = useState(false);
     const [isButtonLoading, setIsButtonLoading] = useState(false);
 
@@ -97,7 +98,8 @@ export default function AdminUsers({ loggedUser }) {
                 .catch(error => {
                     setUsers([]);
                     setIsLoaded(true);
-                    setAlertMessage(error.message)
+                    setAlertType("error")
+                    setAlertMessage(error.response.data.message)
                     setIsAlertOpen(true);
                 })
         }
@@ -125,10 +127,22 @@ export default function AdminUsers({ loggedUser }) {
                 setAlertMessage(result.data.message)
                 setIsAlertOpen(true);
                 setIsLoaded(false);
+                setIsButtonLoading(false);
+                
             })
             .catch(error => {
-                setAlertMessage(error.message)
-                setIsAlertOpen(true);
+                setIsButtonLoading(false);
+                if (error.response.data.message == "Email is already used") {
+                    setUserError("Email is already used")
+                }
+                else if (error.response.data.message == "Contact No is already used") {
+                    setUserError("Contact No is already used")
+                }
+                else {
+                    setAlertType("error")
+                    setAlertMessage(error.response.data.message)
+                    setIsAlertOpen(true);
+                }
             })
     }
 
@@ -158,8 +172,9 @@ export default function AdminUsers({ loggedUser }) {
                         <button className="bg-[#212121] text-white py-[12px] px-[20px] rounded-lg text-[14px] flex items-center font-bold cursor-pointer"
                             onClick={() => {
                                 setUser(initialUser);
-                                setIsButtonClicked(false);
+                                setUserError("")
                                 setDialogTitle("Add New User");
+                                setIsButtonClicked(false);
                                 setIsDialogOpen(true);
                             }}>
                             <TiUserAdd size={20} className="mr-[15px]" />  {/* icon */}
@@ -252,7 +267,7 @@ export default function AdminUsers({ loggedUser }) {
                                                         <TableCell align="center" sx={{ display: { xs: "none", md: "table-cell" } }}><Badge type={element.emailVerified ? "success" : "warning"} message={element.emailVerified ? "Verified" : "Not Verified"} /></TableCell>
                                                         {/* Actions column */}
                                                         <TableCell align="center" >
-                                                            <IconButton color="primary"> <MdEdit /> </IconButton> {/* edit button */}
+                                                            <IconButton color="primary" onClick={() => findByContactNo(element.contactNo)}> <MdEdit /> </IconButton> {/* edit button */}
                                                             <IconButton color="error"> <MdDelete /> </IconButton> {/* delete button */}
                                                         </TableCell>
                                                     </TableRow>
@@ -327,8 +342,8 @@ export default function AdminUsers({ loggedUser }) {
                             style={{ width: "410px", marginTop: "15px" }}
                             value={user.email}
                             onChange={handleInputChange}
-                            error={isButtonClicked && !emailRegex.test(user.email)}
-                            helperText={`${isButtonClicked && !emailRegex.test(user.email) ? "Enter Valid Email address" : ""}`}
+                            error={isButtonClicked && !emailRegex.test(user.email) || userError == "Email is already used"}
+                            helperText={`${isButtonClicked && !emailRegex.test(user.email) ? "Enter Valid Email address" : userError == "Email is already used" ? "Email is already used" : ""}`}
                         />
                     </div>
 
@@ -340,8 +355,8 @@ export default function AdminUsers({ loggedUser }) {
                             variant="outlined"
                             value={user.contactNo}
                             onChange={handleInputChange}
-                            error={isButtonClicked && user.contactNo.length < 4}
-                            helperText={`${isButtonClicked && !contactNoRegex.test(user.contactNo) ? "Enter Valid Contact No." : ""}`}
+                            error={isButtonClicked && user.contactNo.length < 4 || userError == "Contact No is already used"}
+                            helperText={`${isButtonClicked && !contactNoRegex.test(user.contactNo) ? "Enter Valid Contact No." : userError == "Contact No is already used" ? "Contact No is already used" : ""}`}
                         />
 
                         <TextField
