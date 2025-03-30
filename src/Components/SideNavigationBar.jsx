@@ -1,5 +1,4 @@
-import { useState } from "react";
-import { IconButton, Menu, MenuItem } from "@mui/material";
+import { IconButton } from "@mui/material";
 import { BiSolidDashboard } from "react-icons/bi";
 import { HiMiniUsers } from "react-icons/hi2";
 import { IoIosBed } from "react-icons/io";
@@ -9,7 +8,7 @@ import { Link, useLocation } from "react-router-dom";
 import { AiOutlineLogout } from "react-icons/ai";
 import { FaUserCircle } from "react-icons/fa";
 
-export default function SideNavigationBar({ user }) {
+export default function SideNavigationBar({ loggedUser }) {
 
     const location = useLocation();
     const currentUrl = location.pathname;
@@ -70,15 +69,15 @@ export default function SideNavigationBar({ user }) {
 
             </div>
 
-            {/* user details */}
+            {/* loggedUser details */}
             <div className="w-[100%] flex justify-center items-center absolute bottom-[10px] border-t border-gray-300">
                 <div className="lg:w-[80%] xl:w-[90%] h-[60px] flex items-center py-3 mt-[10px]">
                     {/* User image */}
-                    <img src={user.image} className="w-[45px] h-[45px] rounded-full" />
+                    <img src={loggedUser.image} className="w-[45px] h-[45px] rounded-full" />
                     {/* User details */}
                     <div className="ml-3 flex flex-col">
-                        <span className="lg:w-[120px] lg:h-[50px] xl:w-[205px] xl:h-[25px] text-gray-900 overflow-hidden font-semibold">{user.name}</span>
-                        <span className="hidden xl:block xl:w-[205px] h-[20px] text-gray-500 overflow-hidden text-sm ">{user.email}</span>
+                        <span className="lg:w-[120px] lg:h-[50px] xl:w-[205px] xl:h-[25px] text-gray-900 overflow-hidden font-semibold">{loggedUser.name}</span>
+                        <span className="hidden xl:block xl:w-[205px] h-[20px] text-gray-500 overflow-hidden text-sm ">{loggedUser.email}</span>
                     </div>
                     {/* Log out Button */}
                     <div className="relative">
