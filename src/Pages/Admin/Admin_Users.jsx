@@ -47,11 +47,12 @@ export default function AdminUsers({ loggedUser }) {
     // Add and Update user Dialog related
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [dialogTitle, setDialogTitle] = useState("");
-    const initialUser = { title: "", firstName: "", lastName: "", email: "", contactNo: "", password: "", type: "", disabled: false }; // User structure
+    const initialUser = { id: "", title: "", firstName: "", lastName: "", email: "", contactNo: "", password: "", type: "", disabled: false }; // User structure
     const [user, setUser] = useState(initialUser);
     const [userError, setUserError] = useState("");
     const [isButtonClicked, setIsButtonClicked] = useState(false);
     const [isButtonLoading, setIsButtonLoading] = useState(false);
+    const [currentUser, setCurrentUser] = useState(initialUser);
 
     const [isAlertOpen, setIsAlertOpen] = useState(false);
     const [alertType, setAlertType] = useState("");
@@ -101,6 +102,7 @@ export default function AdminUsers({ loggedUser }) {
     function handleInputChange(e) {
         const { name, value } = e.target;
         setUser(prev => ({ ...prev, [name]: value }))
+        setUserError("")
     }
 
     // Add new User
@@ -124,11 +126,8 @@ export default function AdminUsers({ loggedUser }) {
             })
             .catch(error => {
                 setIsButtonLoading(false);
-                if (error.response.data.message == "Email is already used") {
-                    setUserError("Email is already used")
-                }
-                else if (error.response.data.message == "Contact No is already used") {
-                    setUserError("Contact No is already used")
+                if (error.response.data.message == "Email is already used" || error.response.data.message == "Contact No is already used") {
+                    setUserError(error.response.data.message)
                 }
                 else {
                     setAlertType("error")
@@ -140,6 +139,8 @@ export default function AdminUsers({ loggedUser }) {
 
     // Find By ContactNo
     function findByContactNo(contactNo, purpose) {
+        setUserError("");
+
         if (!contactNoRegex.test(contactNo)) {
             setAlertMessage("Please Enter Valid Contact Number")
             setIsAlertOpen(true);
@@ -153,7 +154,8 @@ export default function AdminUsers({ loggedUser }) {
                 }
                 else {
                     setUser(result.data.user);
-                    setDialogTitle("Edit User");
+                    setCurrentUser(result.data.user)
+                    setDialogTitle("Edit User Details");
                     setIsDialogOpen(true);
                 }
                 setSearchValue("")
@@ -162,6 +164,43 @@ export default function AdminUsers({ loggedUser }) {
                 setAlertType("error")
                 setAlertMessage(error.response.data.message)
                 setIsAlertOpen(true);
+            })
+    }
+
+    function update() {
+        setIsButtonClicked(true);
+
+        if (user.title == "" || user.firstName < 4 || user.lastName < 4 || !emailRegex.test(user.email) || !contactNoRegex.test(user.contactNo) || user.type == "") {
+            return
+        }
+
+        if (currentUser.title == user.title || currentUser.firstName == user.firstName || currentUser.lastName == user.lastName || currentUser.email == user.email || currentUser.contactNo == user.contactNo || currentUser.type == user.type) {
+            setUserError("No any Changes")
+            return
+        }
+
+        setIsButtonLoading(true);
+        axios.put(`${backendUrl}/api/user`, user, { headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" } })
+            .then(result => {
+                setIsDialogOpen(false);
+                setUserError("")
+                setAlertType("success")
+                setAlertMessage(result.data.message)
+                setIsAlertOpen(true);
+                setIsLoaded(false);
+                setIsButtonLoading(false);
+
+            })
+            .catch(error => {
+                setIsButtonLoading(false);
+                if (error.response.data.message == "Email is already used" || error.response.data.message == "Contact No is already used") {
+                    setUserError(error.response.data.message)
+                }
+                else {
+                    setAlertType("error")
+                    setAlertMessage(error.response.data.message)
+                    setIsAlertOpen(true);
+                }
             })
     }
 
@@ -386,8 +425,8 @@ export default function AdminUsers({ loggedUser }) {
                             variant="outlined"
                             value={user.password}
                             onChange={handleInputChange}
-                            error={isButtonClicked && user.password.length < 8}
-                            helperText={`${isButtonClicked && user.password.length < 8 ? "Enter more than 8 characters" : ""}`}
+                            error={dialogTitle == "Add New User" ? isButtonClicked && user.password.length < 8 : false}
+                            helperText={`${dialogTitle == "Add New User" ? isButtonClicked && user.password.length < 8 ? "Enter more than 8 characters" : "" : ""}`}
                         />
 
                     </div>
@@ -425,7 +464,7 @@ export default function AdminUsers({ loggedUser }) {
                     </div>
 
                     {/* button  */}
-                    <div>
+                    <div className="flex flex-col items-center">
                         {
                             isButtonLoading
                                 ?
@@ -436,10 +475,11 @@ export default function AdminUsers({ loggedUser }) {
                                 :
                                 <button
                                     className="w-full h-[45px] rounded-md bg-[#303030] text-white mb-[5px] font-bold cursor-pointer"
-                                    onClick={persist}
-                                > {dialogTitle}
+                                    onClick={dialogTitle == "Add New User" ? persist : update}
+                                > {dialogTitle == "Edit User Details" ? "Update User Details" : dialogTitle}
                                 </button>
                         }
+                        <span className="text-red-500"> {userError == "No any Changes" ? "No any Changes" : ""}</span>
                     </div>
 
                 </DialogContent>
