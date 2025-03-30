@@ -11,6 +11,7 @@ import { IoClose } from "react-icons/io5";
 import { Tailspin } from 'ldrs/react'
 import 'ldrs/react/Tailspin.css'
 import Alert from "../../Components/Alert";
+import ConfirmationAlert from "../../Components/ConfirmationAlert";
 
 export default function AdminUsers({ loggedUser }) {
 
@@ -53,10 +54,13 @@ export default function AdminUsers({ loggedUser }) {
     const [isButtonClicked, setIsButtonClicked] = useState(false);
     const [isButtonLoading, setIsButtonLoading] = useState(false);
     const [currentUser, setCurrentUser] = useState(initialUser);
-
+    // Alert related
     const [isAlertOpen, setIsAlertOpen] = useState(false);
     const [alertType, setAlertType] = useState("");
     const [alertMessage, setAlertMessage] = useState("");
+    // Confirmation Alert related
+    const [isConfirmationAlertOpen, setIsConfirmationAlertOpen] = useState(false);
+    const [confirmationAlertType, setConfirmationAlertType] = useState("Delete");
 
     // Calculating Record Count when changing window height
     useEffect(() => {
@@ -229,11 +233,13 @@ export default function AdminUsers({ loggedUser }) {
                     <div className="mr-[20px]">
                         <button className="bg-[#212121] text-white py-[12px] px-[20px] rounded-lg text-[14px] flex items-center font-bold cursor-pointer"
                             onClick={() => {
-                                setUser(initialUser);
-                                setUserError("")
-                                setDialogTitle("Add New User");
-                                setIsButtonClicked(false);
-                                setIsDialogOpen(true);
+                                // setUser(initialUser);
+                                // setUserError("")
+                                // setDialogTitle("Add New User");
+                                // setIsButtonClicked(false);
+                                // setIsDialogOpen(true);
+
+                                setIsConfirmationAlertOpen(true)
                             }}>
                             <TiUserAdd size={20} className="mr-[15px]" />  {/* icon */}
                             ADD NEW USER
@@ -488,6 +494,8 @@ export default function AdminUsers({ loggedUser }) {
 
             {/* To display success messages and error messages */}
             <Alert isAlertOpen={isAlertOpen} type={alertType} message={alertMessage} setIsAlertOpen={setIsAlertOpen} />
+
+            <ConfirmationAlert open={isConfirmationAlertOpen} type={confirmationAlertType} setIsConfirmationAlertOpen={setIsConfirmationAlertOpen} isButtonLoading={isButtonLoading}/>
 
         </main>
     )
