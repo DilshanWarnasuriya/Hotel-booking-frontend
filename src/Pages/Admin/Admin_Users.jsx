@@ -60,7 +60,9 @@ export default function AdminUsers({ loggedUser }) {
     const [alertMessage, setAlertMessage] = useState("");
     // Confirmation Alert related
     const [isConfirmationAlertOpen, setIsConfirmationAlertOpen] = useState(false);
-    const [confirmationAlertType, setConfirmationAlertType] = useState("Delete");
+    const [confirmationAlertType, setConfirmationAlertType] = useState("");
+
+    const [selectItem, setSelectItem] = useState(null);
 
     // Calculating Record Count when changing window height
     useEffect(() => {
@@ -171,6 +173,7 @@ export default function AdminUsers({ loggedUser }) {
             })
     }
 
+    // Update User Details
     function update() {
         setIsButtonClicked(true);
 
@@ -208,6 +211,24 @@ export default function AdminUsers({ loggedUser }) {
             })
     }
 
+    // Remove User
+    function remove() {
+        axios.delete(`${backendUrl}/api/user/${selectItem}`, { headers: { Authorization: `Bearer ${token}` } })
+            .then(result => {
+                setConfirmationAlertType("")
+                setIsConfirmationAlertOpen(false)
+                setAlertType("success")
+                setAlertMessage(result.data.message)
+                setIsAlertOpen(true);
+                setIsLoaded(false);
+            })
+            .catch(error => {
+                setAlertType("error")
+                setAlertMessage(error.response.data.message)
+                setIsAlertOpen(true);
+            })
+    }
+
     return (
         <main className="App w-full h-screen flex p-[25px]">
 
@@ -233,13 +254,11 @@ export default function AdminUsers({ loggedUser }) {
                     <div className="mr-[20px]">
                         <button className="bg-[#212121] text-white py-[12px] px-[20px] rounded-lg text-[14px] flex items-center font-bold cursor-pointer"
                             onClick={() => {
-                                // setUser(initialUser);
-                                // setUserError("")
-                                // setDialogTitle("Add New User");
-                                // setIsButtonClicked(false);
-                                // setIsDialogOpen(true);
-
-                                setIsConfirmationAlertOpen(true)
+                                setUser(initialUser);
+                                setUserError("")
+                                setDialogTitle("Add New User");
+                                setIsButtonClicked(false);
+                                setIsDialogOpen(true);
                             }}>
                             <TiUserAdd size={20} className="mr-[15px]" />  {/* icon */}
                             ADD NEW USER
@@ -333,7 +352,11 @@ export default function AdminUsers({ loggedUser }) {
                                                         {/* Actions column */}
                                                         <TableCell align="center" >
                                                             <IconButton color="primary" onClick={() => findByContactNo(element.contactNo, "edit")}> <MdEdit /> </IconButton> {/* edit button */}
-                                                            <IconButton color="error"> <MdDelete /> </IconButton> {/* delete button */}
+                                                            <IconButton color="error" onClick={() => {
+                                                                setSelectItem(element.id)
+                                                                setConfirmationAlertType("Delete")
+                                                                setIsConfirmationAlertOpen(true)
+                                                            }}> <MdDelete /> </IconButton> {/* delete button */}
                                                         </TableCell>
                                                     </TableRow>
                                                 )
@@ -495,7 +518,7 @@ export default function AdminUsers({ loggedUser }) {
             {/* To display success messages and error messages */}
             <Alert isAlertOpen={isAlertOpen} type={alertType} message={alertMessage} setIsAlertOpen={setIsAlertOpen} />
 
-            <ConfirmationAlert open={isConfirmationAlertOpen} type={confirmationAlertType} setIsConfirmationAlertOpen={setIsConfirmationAlertOpen} isButtonLoading={isButtonLoading}/>
+            <ConfirmationAlert open={isConfirmationAlertOpen} type={confirmationAlertType} action={remove} setIsConfirmationAlertOpen={setIsConfirmationAlertOpen} isButtonLoading={isButtonLoading} />
 
         </main>
     )
