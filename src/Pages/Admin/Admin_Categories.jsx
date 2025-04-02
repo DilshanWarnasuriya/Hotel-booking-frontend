@@ -1,4 +1,4 @@
-import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Avatar, Box, Typography, IconButton, Pagination } from "@mui/material";
+import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Avatar, Box, Typography, IconButton, Pagination, Skeleton } from "@mui/material";
 import { useState } from "react";
 import { TiThMenu, TiUserAdd } from "react-icons/ti";
 import { AiOutlineSearch } from "react-icons/ai";
@@ -7,7 +7,7 @@ import Tabs from "../../Components/Tabs";
 import SideNavigationDrawer from "../../Components/SideNavigationDrawer";
 
 export default function AdminCategories({ loggedUser }) {
-    
+
     // Drawer Side navigation bar related
     const [isSidebarDrawerOpen, setIsSidebarDrawerOpen] = useState(false);
     const toggleDrawer = (newOpen) => () => setIsSidebarDrawerOpen(newOpen);
@@ -42,7 +42,7 @@ export default function AdminCategories({ loggedUser }) {
                         </button>
                     </div>
                 </div>
-                
+
 
                 {/* table row */}
                 <div className="w-full h-[calc(100vh-160px)] overflow-auto mt-[20px]">
@@ -95,12 +95,41 @@ export default function AdminCategories({ loggedUser }) {
                                         <IconButton color="error"> <MdDelete /> </IconButton> {/* delete button */}
                                     </TableCell>
                                 </TableRow>
+
+                                <TableRow key={1}>
+                                    <TableCell component="th" scope="row">
+                                        <Box display="flex" alignItems="center">
+                                            <Skeleton variant="rectangular" width={125} height={70} />
+                                            <Box sx={{ ml: 2 }}>
+                                                <Skeleton variant="text" width={80} />
+                                                <Skeleton variant="text" width={60} />
+                                            </Box>
+                                        </Box>
+                                    </TableCell>
+                                    <TableCell align="center" sx={{ display: { xs: "none", md: "table-cell" } }}>
+                                        <div className="flex justify-center">
+                                            <Skeleton variant="text" width="100%" height={120} />
+                                        </div>
+                                    </TableCell>
+                                    <TableCell align="center">
+                                        <div className="flex justify-center">
+                                            <Skeleton variant="text" width="100%" height={120} />
+                                        </div>
+                                    </TableCell>
+                                    <TableCell align="center">
+                                        <Box display="flex" justifyContent="center">
+                                            <Skeleton variant="circular" width={40} height={40} sx={{ mr: 1 }} />
+                                            <Skeleton variant="circular" width={40} height={40} />
+                                        </Box>
+                                    </TableCell>
+                                </TableRow>
+                                
                             </TableBody>
 
                         </Table>
                     </TableContainer>
                 </div>
-                
+
 
             </div>
         </main>
