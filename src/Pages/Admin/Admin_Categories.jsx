@@ -7,18 +7,10 @@ import Tabs from "../../Components/Tabs";
 import SideNavigationDrawer from "../../Components/SideNavigationDrawer";
 
 export default function AdminCategories({ loggedUser }) {
-
-    // tab related
-    const tabs = ["All", "Enable", "Disable"];
-    const [selectedTab, setSelectedTab] = useState(tabs[0]);
+    
     // Drawer Side navigation bar related
     const [isSidebarDrawerOpen, setIsSidebarDrawerOpen] = useState(false);
     const toggleDrawer = (newOpen) => () => setIsSidebarDrawerOpen(newOpen);
-    // Table related
-    const [isLoaded, setIsLoaded] = useState(false);
-    const [pageNo, setPageNo] = useState(1);
-    const [totalPages, setTotalPages] = useState(5);
-
 
     return (
         <main className="App w-full h-screen flex p-[25px]">
@@ -50,28 +42,10 @@ export default function AdminCategories({ loggedUser }) {
                         </button>
                     </div>
                 </div>
-
-                {/* second row */}
-                <div className="w-full h-[90px] flex justify-between items-center bg-red-">
-                    {/* Tabs */}
-                    <div className="ml-[20px]">
-                        <Tabs tabs={tabs} selectedTab={selectedTab} setSelectedTab={setSelectedTab} setIsLoaded={setIsLoaded} />
-                    </div>
-                    {/* Search */}
-                    <div className="mr-[20px]">
-                        <div className="relative flex items-center w-[200px] md:w-[300px]">
-                            <AiOutlineSearch className="absolute left-4 w-4 h-4 text-gray-600" />
-                            <input
-                                type="search"
-                                placeholder="Search"
-                                className="w-full h-10 pl-10 pr-4 border border-gray-600 rounded-lg text-gray-900 outline-none transition-all placeholder-gray-600"
-                            />
-                        </div>
-                    </div>
-                </div>
+                
 
                 {/* table row */}
-                <div className="w-full h-[calc(100vh-305px)] overflow-auto">
+                <div className="w-full h-[calc(100vh-160px)] overflow-auto mt-[20px]">
                     <TableContainer component={Paper} elevation={0} sx={{ maxHeight: "calc(100vh - 305px)", overflow: "auto", border: "none" }}>
                         <Table stickyHeader sx={{ minWidth: 580, border: "none" }} aria-label="simple table">
 
@@ -126,19 +100,7 @@ export default function AdminCategories({ loggedUser }) {
                         </Table>
                     </TableContainer>
                 </div>
-
-                {/* Pagination row */}
-                <div className="w-full h-[75px] flex justify-center items-center">
-                    <Pagination
-                        page={pageNo}
-                        count={totalPages}
-                        onChange={(event, value) => {
-                            setPageNo(value);
-                        }}
-                        variant="outlined"
-                        color="primary"
-                    />
-                </div>
+                
 
             </div>
         </main>
