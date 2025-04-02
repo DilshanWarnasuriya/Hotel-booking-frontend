@@ -1,16 +1,43 @@
-import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Avatar, Box, Typography, IconButton, Pagination, Skeleton } from "@mui/material";
-import { useState } from "react";
+import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Avatar, Box, Typography, IconButton, Skeleton } from "@mui/material";
+import { useEffect, useState } from "react";
 import { TiThMenu, TiUserAdd } from "react-icons/ti";
-import { AiOutlineSearch } from "react-icons/ai";
 import { MdEdit, MdDelete } from "react-icons/md";
-import Tabs from "../../Components/Tabs";
 import SideNavigationDrawer from "../../Components/SideNavigationDrawer";
+import axios from "axios";
+import Alert from "../../Components/Alert";
 
 export default function AdminCategories({ loggedUser }) {
+
+    const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
     // Drawer Side navigation bar related
     const [isSidebarDrawerOpen, setIsSidebarDrawerOpen] = useState(false);
     const toggleDrawer = (newOpen) => () => setIsSidebarDrawerOpen(newOpen);
+    // Table related
+    const [categories, setCategories] = useState([]);
+    const [isLoaded, setIsLoaded] = useState(false);
+    // Alert related
+    const [isAlertOpen, setIsAlertOpen] = useState(false);
+    const [alertType, setAlertType] = useState("");
+    const [alertMessage, setAlertMessage] = useState("");
+
+    useEffect(() => {
+        if (!isLoaded) {
+            axios.get(`${backendUrl}/api/category`)
+                .then(result => {
+                    setCategories(result.data);
+                    setIsLoaded(true);
+                })
+                .catch(error => {
+                    setCategories([]);
+                    setIsLoaded(true);
+                    setAlertType("error");
+                    setAlertMessage(error.response.data.message);
+                    setIsAlertOpen(true);
+                })
+        }
+    })
+
 
     return (
         <main className="App w-full h-screen flex p-[25px]">
@@ -33,7 +60,7 @@ export default function AdminCategories({ loggedUser }) {
                             <span className="text-[16px] text-gray-700">See information about all Categories</span>
                         </div>
                     </div>
-                    {/* Add user Button */}
+                    {/* Add category Button */}
                     <div className="mr-[20px]">
                         <button className="bg-[#212121] text-white py-[12px] px-[20px] rounded-lg text-[14px] flex items-center font-bold cursor-pointer"
                             onClick={() => { }}>
@@ -43,95 +70,112 @@ export default function AdminCategories({ loggedUser }) {
                     </div>
                 </div>
 
-
                 {/* table row */}
                 <div className="w-full h-[calc(100vh-160px)] overflow-auto mt-[20px]">
-                    <TableContainer component={Paper} elevation={0} sx={{ maxHeight: "calc(100vh - 305px)", overflow: "auto", border: "none" }}>
+                    <TableContainer component={Paper} elevation={0} sx={{ maxHeight: "calc(100vh - 160px)", overflow: "auto", border: "none" }}>
                         <Table stickyHeader sx={{ minWidth: 580, border: "none" }} aria-label="simple table">
 
                             <TableHead>
                                 <TableRow sx={{ backgroundColor: "#f5f5f5" }}>
                                     <TableCell sx={{ backgroundColor: "#f5f5f5", fontWeight: "bold", position: "sticky", top: 0, zIndex: 1 }}>Category</TableCell>
-                                    <TableCell align="center" sx={{ backgroundColor: "#f5f5f5", fontWeight: "bold", position: "sticky", top: 0, zIndex: 1 }}>Description</TableCell>
-                                    <TableCell align="center" sx={{ backgroundColor: "#f5f5f5", fontWeight: "bold", position: "sticky", top: 0, zIndex: 1, display: { xs: "none", md: "table-cell" } }}>Features</TableCell>
+                                    <TableCell align="center" sx={{ backgroundColor: "#f5f5f5", fontWeight: "bold", position: "sticky", top: 0, zIndex: 1, display: { xs: "none", md: "table-cell" } }}>Description</TableCell>
+                                    <TableCell align="center" sx={{ backgroundColor: "#f5f5f5", fontWeight: "bold", position: "sticky", top: 0, zIndex: 1 }}>Features</TableCell>
                                     <TableCell align="center" sx={{ backgroundColor: "#f5f5f5", fontWeight: "bold", position: "sticky", top: 0, zIndex: 1 }}>Actions</TableCell>
                                 </TableRow>
                             </TableHead>
 
                             <TableBody>
-                                <TableRow key={1} sx={{ "&:hover": { backgroundColor: "#e8eef8" }, transition: "background-color 0.3s ease", minHeight: "85px" }}>
-                                    {/* Category column */}
-                                    <TableCell component="th" scope="row">
-                                        <Box display="flex" alignItems="center">
-                                            <Avatar src="https://www.serenevilla.com/images/mainpic-room.jpg" sx={{ width: 125, height: 70 }} variant="square" />  {/* Category image */}
-                                            <Box sx={{ ml: 2 }}>
-                                                <Typography fontWeight="bold" noWrap> Luxury </Typography> {/* Category Name */}
-                                                <Typography variant="body2" color="text.secondary" noWrap> Rs. 7000 </Typography> {/* Category price */}
-                                            </Box>
-                                        </Box>
-                                    </TableCell>
-                                    {/* Description column */}
-                                    <TableCell align="center" sx={{ display: { xs: "none", md: "table-cell" } }}>
-                                        <div className="flex justify-center items-center">
-                                            <p className="max-w-[500px] text-justify">Experience ultimate luxury in this elegant suite, featuring plush king-size bedding, floor-to-ceiling windows with breathtaking views, a private balcony, and a lavish marble bathroom with a deep soaking tub. Indulge in modern amenities, personalized service, and an ambiance of pure sophistication.</p>
-                                        </div>
-                                    </TableCell>
-                                    {/* Features column */}
-                                    <TableCell align="center">
-                                        <div className="flex justify-center items-center">
-                                            <div className="max-w-[500px] min-h-[85px] flex flex-wrap gap-2 justify-center items-center">
-                                                <span className="py-[5px] px-[15px] rounded-[20px] bg-[#ebebeb]">Air Conditioner</span>
-                                                <span className="py-[5px] px-[15px] rounded-[20px] bg-[#ebebeb]">Breakfast</span>
-                                                <span className="py-[5px] px-[15px] rounded-[20px] bg-[#ebebeb]">Lunch Buffet </span>
-                                                <span className="py-[5px] px-[15px] rounded-[20px] bg-[#ebebeb]">Evening Snack</span>
-                                                <span className="py-[5px] px-[15px] rounded-[20px] bg-[#ebebeb]">Dinner</span>
-                                                <span className="py-[5px] px-[15px] rounded-[20px] bg-[#ebebeb]">Pool Access</span>
-                                            </div>
-                                        </div>
-                                    </TableCell>
-                                    {/* Actions column */}
-                                    <TableCell align="center" >
-                                        <IconButton color="primary"> <MdEdit /> </IconButton> {/* edit button */}
-                                        <IconButton color="error"> <MdDelete /> </IconButton> {/* delete button */}
-                                    </TableCell>
-                                </TableRow>
+                                {   // Table Skeleton
+                                    !isLoaded
+                                        ?
+                                        Array.from({ length: 6 }).map((_, index) => (
+                                            < TableRow key={index}>
+                                                <TableCell component="th" scope="row">
+                                                    <Box display="flex" alignItems="center">
+                                                        <Skeleton variant="rectangular" width={125} height={70} />
+                                                        <Box sx={{ ml: 2 }}>
+                                                            <Skeleton variant="text" width={80} />
+                                                            <Skeleton variant="text" width={60} />
+                                                        </Box>
+                                                    </Box>
+                                                </TableCell>
+                                                <TableCell align="center" height="100px" sx={{ display: { xs: "none", md: "table-cell" } }}>
+                                                    <div className="flex justify-center" >
+                                                        <Skeleton variant="rectangular" width="100%" height={70} />
+                                                    </div>
+                                                </TableCell>
+                                                <TableCell align="center" height="100px">
+                                                    <div className="flex justify-center">
+                                                        <Skeleton variant="rectangular" width="100%" height={70} />
+                                                    </div>
+                                                </TableCell>
+                                                <TableCell align="center">
+                                                    <Box display="flex" justifyContent="center">
+                                                        <Skeleton variant="circular" width={40} height={40} sx={{ mr: 1 }} />
+                                                        <Skeleton variant="circular" width={40} height={40} />
+                                                    </Box>
+                                                </TableCell>
+                                            </TableRow>
+                                        ))
+                                        :  // Table Content
+                                        (categories && categories.length > 0) ?
+                                            categories.map((element, index) => {
+                                                return (
+                                                    <TableRow key={index} sx={{ "&:hover": { backgroundColor: "#e8eef8" }, transition: "background-color 0.3s ease", minHeight: "85px" }}>
+                                                        {/* Category column */}
+                                                        <TableCell component="th" scope="row">
+                                                            <Box display="flex" alignItems="center">
+                                                                <Avatar src={element.image[0]} sx={{ width: 125, height: 70 }} variant="square" />  {/* Category image */}
+                                                                <Box sx={{ ml: 2 }}>
+                                                                    <Typography fontWeight="bold" noWrap> {element.name} </Typography> {/* Category Name */}
+                                                                    <Typography variant="body2" color="text.secondary" noWrap> {"Rs. " + element.price} </Typography> {/* Category price */}
+                                                                </Box>
+                                                            </Box>
+                                                        </TableCell>
+                                                        {/* Description column */}
+                                                        <TableCell align="center" sx={{ display: { xs: "none", md: "table-cell" } }}>
+                                                            <div className="flex justify-center items-center">
+                                                                <p className="max-w-[500px] text-justify">{element.description}</p>
+                                                            </div>
+                                                        </TableCell>
+                                                        {/* Features column */}
+                                                        <TableCell align="center">
+                                                            <div className="flex justify-center items-center">
+                                                                <div className="max-w-[500px] min-h-[85px] flex flex-wrap gap-2 justify-center items-center">
+                                                                    {
+                                                                        element.features.map((feature, index) => {
+                                                                            return (
+                                                                                <span key={index} className="py-[5px] px-[15px] rounded-[20px] bg-[#ebebeb]">{feature}</span>
+                                                                            )
+                                                                        })
+                                                                    }
+                                                                </div>
+                                                            </div>
+                                                        </TableCell>
+                                                        {/* Actions column */}
+                                                        <TableCell align="center" >
+                                                            <IconButton color="primary"> <MdEdit /> </IconButton> {/* edit button */}
+                                                            <IconButton color="error"> <MdDelete /> </IconButton> {/* delete button */}
+                                                        </TableCell>
+                                                    </TableRow>
+                                                )
+                                            })
+                                            :  // Empty Table
+                                            <TableRow>
+                                                <TableCell colSpan={4} align="center">No categories found</TableCell>
+                                            </TableRow>
+                                }
 
-                                <TableRow key={1}>
-                                    <TableCell component="th" scope="row">
-                                        <Box display="flex" alignItems="center">
-                                            <Skeleton variant="rectangular" width={125} height={70} />
-                                            <Box sx={{ ml: 2 }}>
-                                                <Skeleton variant="text" width={80} />
-                                                <Skeleton variant="text" width={60} />
-                                            </Box>
-                                        </Box>
-                                    </TableCell>
-                                    <TableCell align="center" sx={{ display: { xs: "none", md: "table-cell" } }}>
-                                        <div className="flex justify-center">
-                                            <Skeleton variant="text" width="100%" height={120} />
-                                        </div>
-                                    </TableCell>
-                                    <TableCell align="center">
-                                        <div className="flex justify-center">
-                                            <Skeleton variant="text" width="100%" height={120} />
-                                        </div>
-                                    </TableCell>
-                                    <TableCell align="center">
-                                        <Box display="flex" justifyContent="center">
-                                            <Skeleton variant="circular" width={40} height={40} sx={{ mr: 1 }} />
-                                            <Skeleton variant="circular" width={40} height={40} />
-                                        </Box>
-                                    </TableCell>
-                                </TableRow>
-                                
                             </TableBody>
 
                         </Table>
                     </TableContainer>
                 </div>
 
-
             </div>
-        </main>
+
+            {/* To display success messages and error messages */}
+            <Alert isAlertOpen={isAlertOpen} type={alertType} message={alertMessage} setIsAlertOpen={setIsAlertOpen} />
+        </main >
     )
 }
