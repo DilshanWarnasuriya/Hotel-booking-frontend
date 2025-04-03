@@ -1,11 +1,12 @@
 import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Avatar, Box, Typography, IconButton, Skeleton, Dialog, DialogTitle, DialogContent, TextField, Autocomplete, Chip } from "@mui/material";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { TiThMenu, TiUserAdd } from "react-icons/ti";
 import { MdEdit, MdDelete } from "react-icons/md";
 import SideNavigationDrawer from "../../Components/SideNavigationDrawer";
 import axios from "axios";
 import Alert from "../../Components/Alert";
 import { IoClose } from "react-icons/io5";
+import { SlCloudUpload } from "react-icons/sl";
 
 export default function AdminCategories({ loggedUser }) {
 
@@ -25,7 +26,10 @@ export default function AdminCategories({ loggedUser }) {
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [dialogTitle, setDialogTitle] = useState("");
 
-    const [selectedValues, setSelectedValues] = useState([]);
+    const [selectImages, setSelectImages] = useState([]); // set selected image file
+    const [imagePreview, setImagePreview] = useState([]); // preview images url
+    const [selectImageIndex, setSelectImageIndex] = useState(null);
+    const fileInputRef = useRef(null);
 
     useEffect(() => {
         if (!isLoaded) {
@@ -44,6 +48,26 @@ export default function AdminCategories({ loggedUser }) {
         }
     })
 
+    function handleSelectImages(e) {
+
+        const newFiles = Array.from(e.target.files); // Convert FileList to array
+        const existingFiles = selectImages.map((file) => file.name); // Get names of existing files
+        const filteredFiles = newFiles.filter((file) => !existingFiles.includes(file.name)); // Filter out duplicates
+
+        if (filteredFiles.length + selectImages.length > 5) {
+            setRoomError("You can only upload up to 5 images");
+            return;
+        }
+
+        setSelectImages((prev) => (Array.isArray(prev) ? [...prev, ...filteredFiles] : [...filteredFiles]));  // Append new files to the existing ones
+
+        const newImagePreviews = filteredFiles.map((file) => URL.createObjectURL(file)); // Generate and append image previews
+        setImagePreview((prev) => (Array.isArray(prev) ? [...prev, ...newImagePreviews] : [...newImagePreviews]));
+
+        if (newImagePreviews.length > 0) {
+            setSelectImageIndex(selectImages.length + newImagePreviews.length - 1);
+        }
+    }
 
     return (
         <main className="App w-full h-screen flex p-[25px]">
@@ -70,6 +94,9 @@ export default function AdminCategories({ loggedUser }) {
                     <div className="mr-[20px]">
                         <button className="bg-[#212121] text-white py-[12px] px-[20px] rounded-lg text-[14px] flex items-center font-bold cursor-pointer"
                             onClick={() => {
+                                setImagePreview([]);
+                                setSelectImages([]);
+                                setSelectImageIndex(null)
                                 setDialogTitle("Add New Category")
                                 setIsDialogOpen(true);
                             }}>
@@ -193,16 +220,62 @@ export default function AdminCategories({ loggedUser }) {
                 <DialogContent dividers>
 
                     {/* Images */}
-                    <div className="w-[420px] h-[260px]">
-                        <img src="https://scdn.aro.ie/Sites/50/anandaspa/uploads/images/FullLengthImages/Medium/1-Living_Villa-bedroom.jpg" className="w-[420px] h-[200px]" />
+                    <div className="w-[420px] ">
 
-                        <div className="w-[420px] h-[50px] mt-[10px] flex justify-center items-center gap-[5px]">
-                            <img src="https://scdn.aro.ie/Sites/50/anandaspa/uploads/images/FullLengthImages/Medium/1-Living_Villa-bedroom.jpg" className="w-[80px] h-[45px] cursor-pointer" />
-                            <img src="https://scdn.aro.ie/Sites/50/anandaspa/uploads/images/FullLengthImages/Medium/1-Living_Villa-bedroom.jpg" className="w-[80px] h-[45px] cursor-pointer" />
-                            <img src="https://scdn.aro.ie/Sites/50/anandaspa/uploads/images/FullLengthImages/Medium/1-Living_Villa-bedroom.jpg" className="w-[80px] h-[45px] cursor-pointer" />
-                            <img src="https://scdn.aro.ie/Sites/50/anandaspa/uploads/images/FullLengthImages/Medium/1-Living_Villa-bedroom.jpg" className="w-[80px] h-[45px] cursor-pointer" />
-                            <img src="https://scdn.aro.ie/Sites/50/anandaspa/uploads/images/FullLengthImages/Medium/1-Living_Villa-bedroom.jpg" className="w-[80px] h-[45px] cursor-pointer" />
+                        <div className="w-[420px] h-[200px]">
+                            {
+                                imagePreview.length == 0
+                                    ? // no file is selected 
+                                    <div className="w-[420px] h-[200px] flex flex-col justify-center items-center bg-gray-50 rounded-2xl border border-gray-400 border-dashed z-10">
+                                        <SlCloudUpload color="#4F46E5" size={40} />
+                                        <h2 className="text-center text-gray-500 mt-[5px] text-[14px]">Select images from your device</h2>
+                                        <label className="mt-[5px]">
+                                            <input type="file" hidden multiple ref={fileInputRef} onChange={handleSelectImages} />
+                                            <div className="flex w-28 h-9 px-2 flex-col bg-[#4F46E5] rounded-full shadow text-white text-xs font-semibold leading-4 items-center justify-center cursor-pointer focus:outline-none">Choose File</div>
+                                        </label>
+                                    </div>
+                                    : // select after files
+                                    <div className="relative">
+                                        {/* image */}
+                                        <div className="w-[420px] h-[200px] absolute top-0 left-0 z-0">
+                                            <img src={imagePreview[selectImageIndex]} className="w-[420px] h-[200px] rounded-2xl" />
+                                        </div>
+
+                                        <div className="w-[420px] h-[200px] opacity-0 hover:opacity-100 transition duration-500 absolute top-0 left-0 flex flex-col justify-center items-center bg-[#0000008e] rounded-2xl border border-gray-400 border-dashed z-20">
+                                            {/* Remove button */}
+                                            <button
+                                                className=" w-28 h-9 bg-[#e54646] rounded-full shadow text-white text-xs font-semibold cursor-pointer"
+                                                onClick={() => {
+                                                    setSelectImages((prev) => prev.filter((_, i) => i !== selectImageIndex));
+                                                    setImagePreview((prev) => prev.filter((_, i) => i !== selectImageIndex));
+                                                    setSelectImageIndex(imagePreview.length > 0 ? (imagePreview.length - 2) : selectImageIndex);
+                                                }}
+                                            > Remove
+                                            </button>
+                                            {/* input button */}
+                                            <label className="mt-[10px]">
+                                                <input type="file" hidden multiple ref={fileInputRef} onChange={handleSelectImages} />
+                                                <div className={`flex w-28 h-9 px-2 flex-col bg-[#4F46E5] rounded-full shadow text-white text-xs font-semibold leading-4 items-center justify-center cursor-pointer focus:outline-none ${imagePreview.length != 5 ? "block" : "hidden"}`}>Choose File</div>
+                                            </label>
+                                        </div>
+                                    </div>
+                            }
                         </div>
+
+                        {
+                            imagePreview.length > 0
+                                ? <div className="w-[420px] h-[50px] mt-[10px] flex justify-center items-center gap-[5px]">
+                                    {
+                                        imagePreview.slice().reverse().map((element, index) => {
+                                            return (
+                                                <img key={index} src={element} className="w-[80px] h-[45px] rounded-[5px] cursor-pointer" onClick={() => setSelectImageIndex((selectImages.length - 1) - index)} />
+                                            )
+                                        })
+                                    }
+                                </div>
+                                : ""
+                        }
+
                     </div>
 
                     {/* Name and Price */}
