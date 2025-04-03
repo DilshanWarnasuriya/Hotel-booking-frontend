@@ -11,6 +11,7 @@ import { SlCloudUpload } from "react-icons/sl";
 export default function AdminCategories({ loggedUser }) {
 
     const backendUrl = import.meta.env.VITE_BACKEND_URL;
+    const priceRegex = /^[1-9]\d*(\.\d+)?$/;
 
     // Drawer Side navigation bar related
     const [isSidebarDrawerOpen, setIsSidebarDrawerOpen] = useState(false);
@@ -25,11 +26,15 @@ export default function AdminCategories({ loggedUser }) {
     // Add and Update Dialog related
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [dialogTitle, setDialogTitle] = useState("");
-
     const [selectImages, setSelectImages] = useState([]); // set selected image file
-    const [imagePreview, setImagePreview] = useState([]); // preview images url
-    const [selectImageIndex, setSelectImageIndex] = useState(null);
+    const [imagePreview, setImagePreview] = useState([]); // set selected preview images url
+    const [selectImageIndex, setSelectImageIndex] = useState(null); // main image preview image index number
     const fileInputRef = useRef(null);
+    const initialCategory = { name: "", description: "", price: "", features: [], images: [] };
+    const [category, setCategory] = useState(initialCategory);
+    const [categoryError, setCategoryError] = useState("");
+    const [isButtonClicked, setIsButtonClicked] = useState(false);
+    const [isButtonLoading, setIsButtonLoading] = useState(false);
 
     useEffect(() => {
         if (!isLoaded) {
@@ -67,6 +72,12 @@ export default function AdminCategories({ loggedUser }) {
         if (newImagePreviews.length > 0) {
             setSelectImageIndex(selectImages.length + newImagePreviews.length - 1);
         }
+    }
+
+    function handleInputChange(e) {
+        const { name, value } = e.target
+        setCategory(prev => ({ ...prev, [name]: value }));
+        setCategoryError("")
     }
 
     return (
@@ -161,7 +172,7 @@ export default function AdminCategories({ loggedUser }) {
                                                         {/* Category column */}
                                                         <TableCell component="th" scope="row">
                                                             <Box display="flex" alignItems="center">
-                                                                <Avatar src={element.image[0]} sx={{ width: 125, height: 70 }} variant="square" />  {/* Category image */}
+                                                                <Avatar src={element.images[0]} sx={{ width: 125, height: 70 }} variant="square" />  {/* Category image */}
                                                                 <Box sx={{ ml: 2 }}>
                                                                     <Typography fontWeight="bold" noWrap> {element.name} </Typography> {/* Category Name */}
                                                                     <Typography variant="body2" color="text.secondary" noWrap> {"Rs. " + element.price} </Typography> {/* Category price */}
@@ -226,7 +237,7 @@ export default function AdminCategories({ loggedUser }) {
                             {
                                 imagePreview.length == 0
                                     ? // no file is selected 
-                                    <div className="w-[420px] h-[200px] flex flex-col justify-center items-center bg-gray-50 rounded-2xl border border-gray-400 border-dashed z-10">
+                                    <div className={`w-[420px] h-[200px] flex flex-col justify-center items-center rounded-2xl border z-10 border-dashed ${isButtonClicked && selectImages.length == 0 ? "bg-red-50 border-red-400" : "bg-gray-50 border-gray-400"}`}>
                                         <SlCloudUpload color="#4F46E5" size={40} />
                                         <h2 className="text-center text-gray-500 mt-[5px] text-[14px]">Select images from your device</h2>
                                         <label className="mt-[5px]">
@@ -236,7 +247,7 @@ export default function AdminCategories({ loggedUser }) {
                                     </div>
                                     : // select after files
                                     <div className="relative">
-                                        {/* image */}
+                                        {/* Main image */}
                                         <div className="w-[420px] h-[200px] absolute top-0 left-0 z-0">
                                             <img src={imagePreview[selectImageIndex]} className="w-[420px] h-[200px] rounded-2xl" />
                                         </div>
@@ -276,15 +287,20 @@ export default function AdminCategories({ loggedUser }) {
                                 : ""
                         }
 
+                        <span className={`text-[#ce453ee5] text-[13px] font-medium ml-[12px] ${isButtonClicked && selectImages.length == 0 ? "block" : "hidden"}`}>Select more than 1 image</span>
                     </div>
 
                     {/* Name and Price */}
                     <div className="flex mt-[20px]">
                         <TextField
-                            name="cName"
+                            name="name"
                             label="Name"
                             variant="outlined"
                             style={{ width: "205px" }}
+                            value={category.name}
+                            onChange={handleInputChange}
+                            error={isButtonClicked && category.name.length < 4 || categoryError == "Category name is already used"}
+                            helperText={`${isButtonClicked && category.name.length < 4 ? "Enter more than 3 characters" : categoryError == "Category name is already used" ? "Category name is already used" : ""}`}
                         />
 
                         <TextField
@@ -292,6 +308,10 @@ export default function AdminCategories({ loggedUser }) {
                             name="price"
                             label="Price"
                             variant="outlined"
+                            value={category.price}
+                            onChange={handleInputChange}
+                            error={isButtonClicked && !priceRegex.test(category.price)}
+                            helperText={`${isButtonClicked && !priceRegex.test(category.price) ? "Enter Valid Price" : ""}`}
                         />
                     </div>
 
@@ -304,6 +324,10 @@ export default function AdminCategories({ loggedUser }) {
                             variant="outlined"
                             multiline
                             maxRows={4}
+                            value={category.description}
+                            onChange={handleInputChange}
+                            error={isButtonClicked && category.description.length < 10 || category.description.length > 300}
+                            helperText={`${isButtonClicked && category.description.length < 10 ? "Enter more than 10 characters" : category.description.length > 300 ? "Enter less than 300 characters" : ""}`}
                         />
                     </div>
 
@@ -315,14 +339,15 @@ export default function AdminCategories({ loggedUser }) {
                             limitTags={2}
                             name="features"
                             options={[]} // No predefined list
-                            style={{ width: "420px" }}
+                            value={category.features}
+                            onChange={(event, newValue) => setCategory(prev => ({ ...prev, features: newValue }))}
                             renderTags={(value, getTagProps) =>
                                 value.map((option, index) => (
                                     <Chip
-                                        key={index}
                                         variant="outlined"
                                         label={option}
                                         {...getTagProps({ index })}
+                                        key={index}
                                     />
                                 ))
                             }
@@ -330,6 +355,8 @@ export default function AdminCategories({ loggedUser }) {
                                 <TextField
                                     {...params}
                                     label="Features"
+                                    error={isButtonClicked && category.features.length == 0}
+                                    helperText={`${isButtonClicked && category.features.length == 0 ? "Enter more than 1 Feature" : ""}`}
                                 />
                             )}
                         />
@@ -339,13 +366,14 @@ export default function AdminCategories({ loggedUser }) {
                     <div className="flex flex-col items-center mt-[20px]">
                         <button
                             className="w-full h-[45px] rounded-md bg-[#303030] text-white mb-[5px] font-bold cursor-pointer"
+                            onClick={() => {
+                                setIsButtonClicked(true)
+                            }}
                         > {dialogTitle == "Edit User Details" ? "Update User Details" : dialogTitle}
                         </button>
                     </div>
 
-
                 </DialogContent>
-
 
             </Dialog>
 
