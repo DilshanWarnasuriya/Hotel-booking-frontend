@@ -10,10 +10,12 @@ import { SlCloudUpload } from "react-icons/sl";
 import { Tailspin } from "ldrs/react";
 import 'ldrs/react/Tailspin.css'
 import uploadImage from "../../Utils/uploadImage";
+import { IoMdAddCircleOutline } from "react-icons/io";
 
 export default function AdminCategories({ loggedUser }) {
 
     const backendUrl = import.meta.env.VITE_BACKEND_URL;
+    const token = import.meta.env.VITE_TOKEN
     const priceRegex = /^[1-9]\d*(\.\d+)?$/;
 
     // Drawer Side navigation bar related
@@ -86,32 +88,14 @@ export default function AdminCategories({ loggedUser }) {
     // Add new category
     async function persist() {
         setIsButtonClicked(true);
+        if (category.name.length < 4 || !priceRegex.test(category.price) || category.description.length < 10 || category.description.length > 300 || category.features.length == 0 || selectImages.length == 0) {
+            return
+        }
 
-        const newCategory = category;
-
-        const uploadPromises = selectImages.map(async (image) => {
-            try {
-                const response = await uploadImage(image);
-                return response.data.url;
-            } catch (e) {
-                console.log(e.message);
-                setAlertType("error")
-                setAlertMessage(e.message)
-                setIsAlertOpen(true);
-                return null;
-            }
-        });
-        const url = await Promise.all(uploadPromises); // all images upload Promise
-        newCategory.images = url // add all url to new category
-
-        console.table(newCategory)
-    }
-
-    async function persist() {
-        setIsButtonClicked(true);
-
+        setIsButtonLoading(true);
         const newCategory = { ...category }; // Copying the category state
 
+        // upload images and get urls
         try {
             const uploadPromises = selectImages.map(async (image) => {
                 const response = await uploadImage(image);
@@ -127,7 +111,28 @@ export default function AdminCategories({ loggedUser }) {
             setIsAlertOpen(true);
         }
 
-        console.table(newCategory);
+        // Add category
+        axios.post(`${backendUrl}/api/category`, newCategory, { headers: { Authorization: `Bearer ${token}` } })
+            .then(result => {
+                setIsDialogOpen(false);
+                setAlertType("success")
+                setAlertMessage(result.data.message)
+                setIsAlertOpen(true);
+                setIsLoaded(false);
+                setIsButtonLoading(false);
+
+            })
+            .catch(error => {
+                setIsButtonLoading(false);
+                if (error.response.data.message == "Category name is already used") {
+                    setUserError(error.response.data.message)
+                }
+                else {
+                    setAlertType("error")
+                    setAlertMessage(error.response.data.message)
+                    setIsAlertOpen(true);
+                }
+            })
     }
 
 
@@ -164,7 +169,7 @@ export default function AdminCategories({ loggedUser }) {
                                 setDialogTitle("Add New Category")
                                 setIsDialogOpen(true);
                             }}>
-                            <TiUserAdd size={20} className="mr-[15px]" />  {/* icon */}
+                            <IoMdAddCircleOutline size={20} className="mr-[10px]" /> {/* icon */}
                             ADD NEW CATEGORY
                         </button>
                     </div>
