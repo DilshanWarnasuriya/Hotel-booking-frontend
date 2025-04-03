@@ -7,6 +7,9 @@ import axios from "axios";
 import Alert from "../../Components/Alert";
 import { IoClose } from "react-icons/io5";
 import { SlCloudUpload } from "react-icons/sl";
+import { Tailspin } from "ldrs/react";
+import 'ldrs/react/Tailspin.css'
+import uploadImage from "../../Utils/uploadImage";
 
 export default function AdminCategories({ loggedUser }) {
 
@@ -80,6 +83,54 @@ export default function AdminCategories({ loggedUser }) {
         setCategoryError("")
     }
 
+    // Add new category
+    async function persist() {
+        setIsButtonClicked(true);
+
+        const newCategory = category;
+
+        const uploadPromises = selectImages.map(async (image) => {
+            try {
+                const response = await uploadImage(image);
+                return response.data.url;
+            } catch (e) {
+                console.log(e.message);
+                setAlertType("error")
+                setAlertMessage(e.message)
+                setIsAlertOpen(true);
+                return null;
+            }
+        });
+        const url = await Promise.all(uploadPromises); // all images upload Promise
+        newCategory.images = url // add all url to new category
+
+        console.table(newCategory)
+    }
+
+    async function persist() {
+        setIsButtonClicked(true);
+
+        const newCategory = { ...category }; // Copying the category state
+
+        try {
+            const uploadPromises = selectImages.map(async (image) => {
+                const response = await uploadImage(image);
+                return response.data.url;
+            });
+
+            const urls = (await Promise.all(uploadPromises)).filter(url => url !== null);
+            newCategory.images = urls; // Assigning the uploaded image URLs
+
+        } catch (e) {
+            setAlertType("error");
+            setAlertMessage(e.message);
+            setIsAlertOpen(true);
+        }
+
+        console.table(newCategory);
+    }
+
+
     return (
         <main className="App w-full h-screen flex p-[25px]">
 
@@ -108,6 +159,8 @@ export default function AdminCategories({ loggedUser }) {
                                 setImagePreview([]);
                                 setSelectImages([]);
                                 setSelectImageIndex(null)
+                                setCategory(initialCategory);
+                                setIsButtonClicked(false)
                                 setDialogTitle("Add New Category")
                                 setIsDialogOpen(true);
                             }}>
@@ -291,7 +344,7 @@ export default function AdminCategories({ loggedUser }) {
                     </div>
 
                     {/* Name and Price */}
-                    <div className="flex mt-[20px]">
+                    <div className="flex mt-[15px]">
                         <TextField
                             name="name"
                             label="Name"
@@ -339,6 +392,7 @@ export default function AdminCategories({ loggedUser }) {
                             limitTags={2}
                             name="features"
                             options={[]} // No predefined list
+                            style={{ width: "420px" }}
                             value={category.features}
                             onChange={(event, newValue) => setCategory(prev => ({ ...prev, features: newValue }))}
                             renderTags={(value, getTagProps) =>
@@ -363,14 +417,22 @@ export default function AdminCategories({ loggedUser }) {
                     </div>
 
                     {/* button  */}
-                    <div className="flex flex-col items-center mt-[20px]">
-                        <button
-                            className="w-full h-[45px] rounded-md bg-[#303030] text-white mb-[5px] font-bold cursor-pointer"
-                            onClick={() => {
-                                setIsButtonClicked(true)
-                            }}
-                        > {dialogTitle == "Edit User Details" ? "Update User Details" : dialogTitle}
-                        </button>
+                    <div className="mt-[15px] flex flex-col items-center">
+                        {
+                            isButtonLoading
+                                ?
+                                <button className="w-full h-[45px] rounded-md bg-[#303030b7] text-white mb-[5px] font-bold flex justify-center items-center">
+                                    <Tailspin size="20" stroke="3" speed="0.9" color="white" />
+                                    <span className="ml-[10px]">Loading....</span>
+                                </button>
+                                :
+                                <button
+                                    className="w-full h-[45px] rounded-md bg-[#303030] text-white mb-[5px] font-bold cursor-pointer"
+                                    onClick={persist}
+                                > {dialogTitle}
+                                </button>
+                        }
+                        <span className="text-red-500"> {categoryError == "No any Changes" ? "No any Changes" : ""}</span>
                     </div>
 
                 </DialogContent>
@@ -379,6 +441,7 @@ export default function AdminCategories({ loggedUser }) {
 
             {/* To display success messages and error messages */}
             <Alert isAlertOpen={isAlertOpen} type={alertType} message={alertMessage} setIsAlertOpen={setIsAlertOpen} />
+
         </main >
     )
 }
