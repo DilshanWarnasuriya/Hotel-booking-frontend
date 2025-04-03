@@ -1,10 +1,11 @@
-import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Avatar, Box, Typography, IconButton, Skeleton } from "@mui/material";
+import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Avatar, Box, Typography, IconButton, Skeleton, Dialog, DialogTitle, DialogContent, TextField, Autocomplete, Chip } from "@mui/material";
 import { useEffect, useState } from "react";
 import { TiThMenu, TiUserAdd } from "react-icons/ti";
 import { MdEdit, MdDelete } from "react-icons/md";
 import SideNavigationDrawer from "../../Components/SideNavigationDrawer";
 import axios from "axios";
 import Alert from "../../Components/Alert";
+import { IoClose } from "react-icons/io5";
 
 export default function AdminCategories({ loggedUser }) {
 
@@ -20,6 +21,11 @@ export default function AdminCategories({ loggedUser }) {
     const [isAlertOpen, setIsAlertOpen] = useState(false);
     const [alertType, setAlertType] = useState("");
     const [alertMessage, setAlertMessage] = useState("");
+    // Add and Update Dialog related
+    const [isDialogOpen, setIsDialogOpen] = useState(false);
+    const [dialogTitle, setDialogTitle] = useState("");
+
+    const [selectedValues, setSelectedValues] = useState([]);
 
     useEffect(() => {
         if (!isLoaded) {
@@ -63,7 +69,10 @@ export default function AdminCategories({ loggedUser }) {
                     {/* Add category Button */}
                     <div className="mr-[20px]">
                         <button className="bg-[#212121] text-white py-[12px] px-[20px] rounded-lg text-[14px] flex items-center font-bold cursor-pointer"
-                            onClick={() => { }}>
+                            onClick={() => {
+                                setDialogTitle("Add New Category")
+                                setIsDialogOpen(true);
+                            }}>
                             <TiUserAdd size={20} className="mr-[15px]" />  {/* icon */}
                             ADD NEW CATEGORY
                         </button>
@@ -173,6 +182,99 @@ export default function AdminCategories({ loggedUser }) {
                 </div>
 
             </div>
+
+            <Dialog open={isDialogOpen}>
+
+                <div className="flex justify-between items-center">
+                    <DialogTitle> {dialogTitle} </DialogTitle>
+                    <IconButton style={{ marginRight: "10px" }} onClick={() => setIsDialogOpen(false)}> <IoClose /> </IconButton>
+                </div>
+
+                <DialogContent dividers>
+
+                    {/* Images */}
+                    <div className="w-[420px] h-[260px]">
+                        <img src="https://scdn.aro.ie/Sites/50/anandaspa/uploads/images/FullLengthImages/Medium/1-Living_Villa-bedroom.jpg" className="w-[420px] h-[200px]" />
+
+                        <div className="w-[420px] h-[50px] mt-[10px] flex justify-center items-center gap-[5px]">
+                            <img src="https://scdn.aro.ie/Sites/50/anandaspa/uploads/images/FullLengthImages/Medium/1-Living_Villa-bedroom.jpg" className="w-[80px] h-[45px] cursor-pointer" />
+                            <img src="https://scdn.aro.ie/Sites/50/anandaspa/uploads/images/FullLengthImages/Medium/1-Living_Villa-bedroom.jpg" className="w-[80px] h-[45px] cursor-pointer" />
+                            <img src="https://scdn.aro.ie/Sites/50/anandaspa/uploads/images/FullLengthImages/Medium/1-Living_Villa-bedroom.jpg" className="w-[80px] h-[45px] cursor-pointer" />
+                            <img src="https://scdn.aro.ie/Sites/50/anandaspa/uploads/images/FullLengthImages/Medium/1-Living_Villa-bedroom.jpg" className="w-[80px] h-[45px] cursor-pointer" />
+                            <img src="https://scdn.aro.ie/Sites/50/anandaspa/uploads/images/FullLengthImages/Medium/1-Living_Villa-bedroom.jpg" className="w-[80px] h-[45px] cursor-pointer" />
+                        </div>
+                    </div>
+
+                    {/* Name and Price */}
+                    <div className="flex mt-[20px]">
+                        <TextField
+                            name="cName"
+                            label="Name"
+                            variant="outlined"
+                            style={{ width: "205px" }}
+                        />
+
+                        <TextField
+                            style={{ width: "205px", marginLeft: "10px" }}
+                            name="price"
+                            label="Price"
+                            variant="outlined"
+                        />
+                    </div>
+
+                    {/* Description */}
+                    <div className="mt-[15px] ">
+                        <TextField
+                            style={{ width: "420px" }}
+                            name="description"
+                            label="Description"
+                            variant="outlined"
+                            multiline
+                            maxRows={4}
+                        />
+                    </div>
+
+                    {/* Features */}
+                    <div className="mt-[15px] ">
+                        <Autocomplete
+                            multiple
+                            freeSolo
+                            limitTags={2}
+                            name="features"
+                            options={[]} // No predefined list
+                            style={{ width: "420px" }}
+                            renderTags={(value, getTagProps) =>
+                                value.map((option, index) => (
+                                    <Chip
+                                        key={index}
+                                        variant="outlined"
+                                        label={option}
+                                        {...getTagProps({ index })}
+                                    />
+                                ))
+                            }
+                            renderInput={(params) => (
+                                <TextField
+                                    {...params}
+                                    label="Features"
+                                />
+                            )}
+                        />
+                    </div>
+
+                    {/* button  */}
+                    <div className="flex flex-col items-center mt-[20px]">
+                        <button
+                            className="w-full h-[45px] rounded-md bg-[#303030] text-white mb-[5px] font-bold cursor-pointer"
+                        > {dialogTitle == "Edit User Details" ? "Update User Details" : dialogTitle}
+                        </button>
+                    </div>
+
+
+                </DialogContent>
+
+
+            </Dialog>
 
             {/* To display success messages and error messages */}
             <Alert isAlertOpen={isAlertOpen} type={alertType} message={alertMessage} setIsAlertOpen={setIsAlertOpen} />
