@@ -1,6 +1,6 @@
 import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Avatar, Box, Typography, IconButton, Skeleton, Dialog, DialogTitle, DialogContent, TextField, Autocomplete, Chip } from "@mui/material";
 import { useEffect, useRef, useState } from "react";
-import { TiThMenu, TiUserAdd } from "react-icons/ti";
+import { TiThMenu } from "react-icons/ti";
 import { MdEdit, MdDelete } from "react-icons/md";
 import SideNavigationDrawer from "../../Components/SideNavigationDrawer";
 import axios from "axios";
@@ -35,8 +35,9 @@ export default function AdminCategories({ loggedUser }) {
     const [imagePreview, setImagePreview] = useState([]); // set selected preview images url
     const [selectImageIndex, setSelectImageIndex] = useState(null); // main image preview image index number
     const fileInputRef = useRef(null);
-    const initialCategory = { name: "", description: "", price: "", features: [], images: [] };
+    const initialCategory = { id: "", name: "", description: "", price: "", features: [], images: [] };
     const [category, setCategory] = useState(initialCategory);
+    const [currentCategory, setCurrentCategory] = useState(initialCategory);
     const [categoryError, setCategoryError] = useState("");
     const [isButtonClicked, setIsButtonClicked] = useState(false);
     const [isButtonLoading, setIsButtonLoading] = useState(false);
@@ -132,6 +133,25 @@ export default function AdminCategories({ loggedUser }) {
                     setAlertMessage(error.response.data.message)
                     setIsAlertOpen(true);
                 }
+            })
+    }
+
+    // find by category id for edit details
+    function findById(id) {
+        axios.get(`${backendUrl}/api/category/id/${id}`, { headers: { Authorization: `Bearer ${token}` } })
+            .then(result => {
+                setCategory(result.data.category);
+                setCurrentCategory(result.data.category)
+                setSelectImages(result.data.category.images)
+                setImagePreview(result.data.category.images)
+                setSelectImageIndex(0)
+                setDialogTitle("Edit Category Details");
+                setIsDialogOpen(true);
+            })
+            .catch(error => {
+                setAlertType("error")
+                setAlertMessage(error.response.data.message)
+                setIsAlertOpen(true);
             })
     }
 
@@ -259,7 +279,7 @@ export default function AdminCategories({ loggedUser }) {
                                                         </TableCell>
                                                         {/* Actions column */}
                                                         <TableCell align="center" >
-                                                            <IconButton color="primary"> <MdEdit /> </IconButton> {/* edit button */}
+                                                            <IconButton color="primary" onClick={() => findById(element.id)}> <MdEdit /> </IconButton> {/* edit button */}
                                                             <IconButton color="error"> <MdDelete /> </IconButton> {/* delete button */}
                                                         </TableCell>
                                                     </TableRow>
