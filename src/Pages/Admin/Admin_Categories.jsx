@@ -11,6 +11,7 @@ import { Tailspin } from "ldrs/react";
 import 'ldrs/react/Tailspin.css'
 import uploadImage from "../../Utils/uploadImage";
 import { IoMdAddCircleOutline } from "react-icons/io";
+import ConfirmationAlert from "../../Components/ConfirmationAlert";
 
 export default function AdminCategories({ loggedUser }) {
 
@@ -41,6 +42,10 @@ export default function AdminCategories({ loggedUser }) {
     const [categoryError, setCategoryError] = useState("");
     const [isButtonClicked, setIsButtonClicked] = useState(false);
     const [isButtonLoading, setIsButtonLoading] = useState(false);
+    // Confirmation Alert related
+    const [isConfirmationAlertOpen, setIsConfirmationAlertOpen] = useState(false);
+    const [confirmationAlertType, setConfirmationAlertType] = useState("");
+    const [selectItem, setSelectItem] = useState(null);
 
     useEffect(() => {
         if (!isLoaded) {
@@ -92,7 +97,7 @@ export default function AdminCategories({ loggedUser }) {
         if (category.name.length < 4 || !priceRegex.test(category.price) || category.description.length < 10 || category.description.length > 300 || category.features.length == 0 || selectImages.length == 0) {
             return
         }
-        
+
         const newCategory = { ...category }; // Copying the category state
         setIsButtonLoading(true); // button loading
 
@@ -253,6 +258,24 @@ export default function AdminCategories({ loggedUser }) {
             })
     }
 
+    // Remove category
+    function remove() {
+        axios.delete(`${backendUrl}/api/category/${selectItem}`, { headers: { Authorization: `Bearer ${token}` } })
+            .then(result => {
+                setConfirmationAlertType("")
+                setIsConfirmationAlertOpen(false)
+                setAlertType("success")
+                setAlertMessage(result.data.message)
+                setIsAlertOpen(true);
+                setIsLoaded(false);
+            })
+            .catch(error => {
+                setAlertType("error")
+                setAlertMessage(error.response.data.message)
+                setIsAlertOpen(true);
+            })
+    }
+
 
     return (
         <main className="App w-full h-screen flex p-[25px]">
@@ -379,7 +402,11 @@ export default function AdminCategories({ loggedUser }) {
                                                         {/* Actions column */}
                                                         <TableCell align="center" >
                                                             <IconButton color="primary" onClick={() => findById(element.id)}> <MdEdit /> </IconButton> {/* edit button */}
-                                                            <IconButton color="error"> <MdDelete /> </IconButton> {/* delete button */}
+                                                            <IconButton color="error" onClick={() => {
+                                                                setSelectItem(element.id)
+                                                                setConfirmationAlertType("Delete")
+                                                                setIsConfirmationAlertOpen(true)
+                                                            }}> <MdDelete /> </IconButton> {/* delete button */}
                                                         </TableCell>
                                                     </TableRow>
                                                 )
@@ -565,6 +592,9 @@ export default function AdminCategories({ loggedUser }) {
 
             {/* To display success messages and error messages */}
             <Alert isAlertOpen={isAlertOpen} type={alertType} message={alertMessage} setIsAlertOpen={setIsAlertOpen} />
+
+            {/* To display Confirm messages to remove category */}
+            <ConfirmationAlert open={isConfirmationAlertOpen} type={confirmationAlertType} action={remove} setIsConfirmationAlertOpen={setIsConfirmationAlertOpen} isButtonLoading={isButtonLoading} />
 
         </main >
     )
