@@ -126,7 +126,7 @@ export default function AdminCategories({ loggedUser }) {
             .catch(error => {
                 setIsButtonLoading(false);
                 if (error.response.data.message == "Category name is already used") {
-                    setUserError(error.response.data.message)
+                    setCategoryError(error.response.data.message)
                 }
                 else {
                     setAlertType("error")
@@ -145,10 +145,91 @@ export default function AdminCategories({ loggedUser }) {
                 setSelectImages(result.data.category.images)
                 setImagePreview(result.data.category.images)
                 setSelectImageIndex(0)
+                setCategoryError("")
                 setDialogTitle("Edit Category Details");
                 setIsDialogOpen(true);
             })
             .catch(error => {
+                setAlertType("error")
+                setAlertMessage(error.response.data.message)
+                setIsAlertOpen(true);
+            })
+    }
+
+    async function update() {
+
+        // check All data entered
+        setIsButtonClicked(true);
+        if (category.name.length < 4 || !priceRegex.test(category.price) || category.description.length < 10 || category.description.length > 300 || category.features.length == 0 || selectImages.length == 0) {
+            return
+        }
+
+        const editCategory = { ...category } // assign category to editCategory 
+        editCategory.images = selectImages; // assign selectImages to editCategory image for check current and edit category are same
+
+        // check current category and edited category are same
+        if (JSON.stringify(editCategory) === JSON.stringify(currentCategory)) {
+            setCategoryError("No any Changes")
+            return
+        }
+
+        // check current Category name is already used
+        if (currentCategory.name != category.name) {
+            try {
+                const checkName = await axios.get(`${backendUrl}/api/category/name/${editCategory.name}`)
+                if (checkName.data.message == "Category found") {
+                    setCategoryError("Category name is already used");
+                    return
+                }
+            }
+            catch (error) {
+                if (error.response.data.message != "Category Not found") {
+                    setAlertType("error");
+                    setAlertMessage(error.response.data.message);
+                    setIsAlertOpen(true);
+                }
+
+            }
+        }
+
+        setCategoryError("")
+
+        // new selected images array
+        const filteredFiles = selectImages.filter(file => file instanceof File);
+
+        // upload new selected images and get urls
+        if (filteredFiles.length > 0) {
+            setIsButtonLoading(true);
+            try {
+                const uploadPromises = selectImages.map(async (image) => {
+                    const response = await uploadImage(image);
+                    return response.data.url;
+                });
+
+                const urls = (await Promise.all(uploadPromises)).filter(url => url !== null);
+                editCategory.images = urls; // Assigning the uploaded image URLs to upload details
+
+            } catch (error) {
+                setAlertType("error");
+                setAlertMessage(error.response.data.message);
+                setIsAlertOpen(true);
+            }
+        }
+
+        // Update category Details
+        setIsButtonLoading(true);
+        axios.put(`${backendUrl}/api/category`, editCategory, { headers: { Authorization: `Bearer ${token}` } })
+            .then(result => {
+                setIsDialogOpen(false);
+                setAlertType("success")
+                setAlertMessage(result.data.message)
+                setIsAlertOpen(true);
+                setIsLoaded(false);
+                setIsButtonLoading(false);
+
+            })
+            .catch(error => {
+                setIsButtonLoading(false);
                 setAlertType("error")
                 setAlertMessage(error.response.data.message)
                 setIsAlertOpen(true);
@@ -184,6 +265,7 @@ export default function AdminCategories({ loggedUser }) {
                                 setImagePreview([]);
                                 setSelectImages([]);
                                 setSelectImageIndex(null)
+                                setCategoryError("")
                                 setCategory(initialCategory);
                                 setIsButtonClicked(false)
                                 setDialogTitle("Add New Category")
@@ -365,7 +447,7 @@ export default function AdminCategories({ loggedUser }) {
                                 : ""
                         }
 
-                        <span className={`text-[#ce453ee5] text-[13px] font-medium ml-[12px] ${isButtonClicked && selectImages.length == 0 ? "block" : "hidden"}`}>Select more than 1 image</span>
+                        <span className={`text-[#ce453ee5] text-[13px] font-medium ml-[12px] ${isButtonClicked && imagePreview.length == 0 ? "block" : "hidden"}`}>Select more than 1 image</span>
                     </div>
 
                     {/* Name and Price */}
@@ -378,7 +460,7 @@ export default function AdminCategories({ loggedUser }) {
                             value={category.name}
                             onChange={handleInputChange}
                             error={isButtonClicked && category.name.length < 4 || categoryError == "Category name is already used"}
-                            helperText={`${isButtonClicked && category.name.length < 4 ? "Enter more than 3 characters" : categoryError == "Category name is already used" ? "Category name is already used" : ""}`}
+                            helperText={`${isButtonClicked && category.name.length < 4 ? "Enter more than 3 characters" : categoryError == "Category name is already used" ? "This name is already used" : ""}`}
                         />
 
                         <TextField
@@ -453,8 +535,8 @@ export default function AdminCategories({ loggedUser }) {
                                 :
                                 <button
                                     className="w-full h-[45px] rounded-md bg-[#303030] text-white mb-[5px] font-bold cursor-pointer"
-                                    onClick={persist}
-                                > {dialogTitle}
+                                    onClick={dialogTitle == "Edit Category Details" ? update : persist}
+                                > {dialogTitle == "Edit Category Details" ? "Update Category Details" : dialogTitle}
                                 </button>
                         }
                         <span className="text-red-500"> {categoryError == "No any Changes" ? "No any Changes" : ""}</span>
