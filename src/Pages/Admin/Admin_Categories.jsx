@@ -92,9 +92,28 @@ export default function AdminCategories({ loggedUser }) {
         if (category.name.length < 4 || !priceRegex.test(category.price) || category.description.length < 10 || category.description.length > 300 || category.features.length == 0 || selectImages.length == 0) {
             return
         }
-
-        setIsButtonLoading(true);
+        
         const newCategory = { ...category }; // Copying the category state
+        setIsButtonLoading(true); // button loading
+
+        // check current Category name is already used
+        try {
+            const checkName = await axios.get(`${backendUrl}/api/category/name/${newCategory.name}`)
+            if (checkName.data.message == "Category found") {
+                setCategoryError("Category name is already used");
+                setIsButtonLoading(false);
+                return
+            }
+        }
+        catch (error) {
+            if (error.response.data.message != "Category Not found") {
+                setAlertType("error");
+                setAlertMessage(error.response.data.message);
+                setIsAlertOpen(true);
+                setIsButtonLoading(false);
+            }
+
+        }
 
         // upload images and get urls
         try {
@@ -125,14 +144,9 @@ export default function AdminCategories({ loggedUser }) {
             })
             .catch(error => {
                 setIsButtonLoading(false);
-                if (error.response.data.message == "Category name is already used") {
-                    setCategoryError(error.response.data.message)
-                }
-                else {
-                    setAlertType("error")
-                    setAlertMessage(error.response.data.message)
-                    setIsAlertOpen(true);
-                }
+                setAlertType("error")
+                setAlertMessage(error.response.data.message)
+                setIsAlertOpen(true);
             })
     }
 
@@ -156,6 +170,7 @@ export default function AdminCategories({ loggedUser }) {
             })
     }
 
+    // Update category
     async function update() {
 
         // check All data entered
@@ -166,6 +181,7 @@ export default function AdminCategories({ loggedUser }) {
 
         const editCategory = { ...category } // assign category to editCategory 
         editCategory.images = selectImages; // assign selectImages to editCategory image for check current and edit category are same
+        setIsButtonLoading(true); // button loading
 
         // check current category and edited category are same
         if (JSON.stringify(editCategory) === JSON.stringify(currentCategory)) {
@@ -179,6 +195,7 @@ export default function AdminCategories({ loggedUser }) {
                 const checkName = await axios.get(`${backendUrl}/api/category/name/${editCategory.name}`)
                 if (checkName.data.message == "Category found") {
                     setCategoryError("Category name is already used");
+                    setIsButtonLoading(false);
                     return
                 }
             }
@@ -187,6 +204,7 @@ export default function AdminCategories({ loggedUser }) {
                     setAlertType("error");
                     setAlertMessage(error.response.data.message);
                     setIsAlertOpen(true);
+                    setIsButtonLoading(false);
                 }
 
             }
@@ -199,7 +217,6 @@ export default function AdminCategories({ loggedUser }) {
 
         // upload new selected images and get urls
         if (filteredFiles.length > 0) {
-            setIsButtonLoading(true);
             try {
                 const uploadPromises = selectImages.map(async (image) => {
                     const response = await uploadImage(image);
@@ -213,11 +230,11 @@ export default function AdminCategories({ loggedUser }) {
                 setAlertType("error");
                 setAlertMessage(error.response.data.message);
                 setIsAlertOpen(true);
+                setIsButtonLoading(false);
             }
         }
 
         // Update category Details
-        setIsButtonLoading(true);
         axios.put(`${backendUrl}/api/category`, editCategory, { headers: { Authorization: `Bearer ${token}` } })
             .then(result => {
                 setIsDialogOpen(false);
