@@ -270,7 +270,7 @@ export default function AdminUsers({ loggedUser }) {
                 <div className="w-full h-[90px] flex justify-between items-center bg-red-">
                     {/* Tabs */}
                     <div className="ml-[20px]">
-                        <Tabs tabs={tabs} selectedTab={selectedTab} setSelectedTab={setSelectedTab} setIsLoaded={setIsLoaded} />
+                        <Tabs tabs={tabs} selectedTab={selectedTab} setSelectedTab={setSelectedTab} setPageNo={setPageNo} setIsLoaded={setIsLoaded} />
                     </div>
                     {/* Search */}
                     <div className="mr-[20px]">
