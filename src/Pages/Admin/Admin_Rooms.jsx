@@ -9,10 +9,13 @@ import { IoMdAddCircleOutline } from "react-icons/io";
 import Alert from "../../Components/Alert";
 import axios from "axios";
 import { IoClose } from "react-icons/io5";
+import { Tailspin } from "ldrs/react";
+import 'ldrs/react/Tailspin.css'
 
 export default function AdminRooms({ loggedUser }) {
 
     const backendUrl = import.meta.env.VITE_BACKEND_URL;
+    const token = import.meta.env.VITE_TOKEN
     const numberRegex = /^\d+$/;
     const defaultHeight = 910;
     const baseRecordCount = 7;
@@ -112,6 +115,37 @@ export default function AdminRooms({ loggedUser }) {
         setRoomError("")
     }
 
+    // Add new Room
+    function persist() {
+        setIsButtonClicked(true);
+
+        if (room.category == "" || !numberRegex.test(room.number) || !numberRegex.test(room.maxPerson)) {
+            return
+        }
+
+        setIsButtonLoading(true)
+        axios.post(`${backendUrl}/api/room`, room, { headers: { Authorization: `Bearer ${token}` } })
+            .then(result => {
+                setIsDialogOpen(false);
+                setAlertType("success")
+                setAlertMessage(result.data.message)
+                setIsAlertOpen(true);
+                setIsLoaded(false);
+                setIsButtonLoading(false);
+            })
+            .catch(error => {
+                setIsButtonLoading(false);
+                if (error.response.data.message == "Room number is already used") {
+                    setRoomError(error.response.data.message)
+                }
+                else {
+                    setAlertType("error")
+                    setAlertMessage(error.response.data.message)
+                    setIsAlertOpen(true);
+                }
+            })
+    }
+
 
     return (
         <main className="App w-full h-screen flex p-[25px]">
@@ -123,7 +157,7 @@ export default function AdminRooms({ loggedUser }) {
             <div className="w-full h-full rounded-lg shadow-md">
 
                 {/* first row */}
-                <div className="w-full h-[90px] flex justify-between items-center">
+                <div className="w-full h-[100px] flex justify-between items-center">
                     {/* Tittle */}
                     <div className="flex">
                         <div className="lg:hidden h-[60px] ml-[20px] flex items-center cursor-pointer">
@@ -151,7 +185,7 @@ export default function AdminRooms({ loggedUser }) {
                 </div>
 
                 {/* second row */}
-                <div className="w-full h-[90px] flex justify-between items-center bg-red-">
+                <div className="w-full h-[100px] flex justify-between items-center bg-red-">
                     {/* Tabs */}
                     <div className="ml-[20px]">
                         <Tabs tabs={tabs} selectedTab={selectedTab} setSelectedTab={setSelectedTab} setPageNo={setPageNo} setIsLoaded={setIsLoaded} />
@@ -170,15 +204,15 @@ export default function AdminRooms({ loggedUser }) {
                 </div>
 
                 {/* table row */}
-                <div className="w-full h-[calc(100vh-305px)] overflow-auto">
+                <div className="w-full h-[calc(100vh-325px)] overflow-auto">
                     <TableContainer component={Paper} elevation={0} sx={{ maxHeight: "calc(100vh - 305px)", overflow: "auto", border: "none" }}>
                         <Table stickyHeader sx={{ minWidth: 580, border: "none" }} aria-label="simple table">
 
                             <TableHead>
                                 <TableRow sx={{ backgroundColor: "#f5f5f5" }}>
-                                    <TableCell align="center" sx={{ backgroundColor: "#f5f5f5", fontWeight: "bold", position: "sticky", top: 0, zIndex: 1 }}>Room</TableCell>
+                                    <TableCell align="center" sx={{ backgroundColor: "#f5f5f5", fontWeight: "bold", position: "sticky", top: 0, zIndex: 1 }}>Room No.</TableCell>
                                     <TableCell align="center" sx={{ backgroundColor: "#f5f5f5", fontWeight: "bold", position: "sticky", top: 0, zIndex: 1 }}>Category</TableCell>
-                                    <TableCell align="center" sx={{ backgroundColor: "#f5f5f5", fontWeight: "bold", position: "sticky", top: 0, zIndex: 1, }}>Maximum</TableCell>
+                                    <TableCell align="center" sx={{ backgroundColor: "#f5f5f5", fontWeight: "bold", position: "sticky", top: 0, zIndex: 1, }}>Max.Person</TableCell>
                                     <TableCell align="center" sx={{ backgroundColor: "#f5f5f5", fontWeight: "bold", position: "sticky", top: 0, zIndex: 1 }}>Actions</TableCell>
                                 </TableRow>
                             </TableHead>
@@ -198,7 +232,7 @@ export default function AdminRooms({ loggedUser }) {
                                                         <Skeleton variant="text" width={80} />
                                                     </Box>
                                                 </TableCell>
-                                                <TableCell align="center" sx={{ display: { xs: "none", md: "table-cell" } }} >
+                                                <TableCell align="center" >
                                                     <Box display="flex" justifyContent="center" width="100%">
                                                         <Skeleton variant="text" width={60} />
                                                     </Box>
@@ -216,9 +250,9 @@ export default function AdminRooms({ loggedUser }) {
                                             rooms.map((element, index) => {
                                                 return (
                                                     <TableRow key={index} sx={{ "&:hover": { backgroundColor: "#e8eef8" }, transition: "background-color 0.3s ease" }}>
-                                                        <TableCell align="center" > {"Rs. " + element.number} </TableCell>
+                                                        <TableCell align="center" > {element.number} </TableCell>
                                                         <TableCell align="center" > {element.category} </TableCell>
-                                                        <TableCell align="center" > {element.maxPerson + " Persons"} </TableCell>
+                                                        <TableCell align="center" > {element.maxPerson} </TableCell>
                                                         <TableCell align="center" >
                                                             <IconButton color="primary"> <MdEdit /> </IconButton>
                                                             <IconButton color="error"> <MdDelete /> </IconButton>
@@ -298,13 +332,13 @@ export default function AdminRooms({ loggedUser }) {
                             style={{ width: "300px" }}
                             value={room.number}
                             onChange={handleInputChange}
-                            error={isButtonClicked && !numberRegex.test(room.number)}
-                            helperText={`${isButtonClicked && !numberRegex.test(room.number) ? "Enter Valid number" : ""}`}
+                            error={isButtonClicked && !numberRegex.test(room.number) || roomError == "Room number is already used"}
+                            helperText={`${isButtonClicked && !numberRegex.test(room.number) ? "Enter Valid number" : roomError == "Room number is already used" ? "This Room number is already used" : ""}`}
                         />
                     </div>
 
                     {/* Maximum person count */}
-                    <div className="flex mb-[15px]">
+                    <div className="flex mb-[20px]">
                         <TextField
                             name="maxPerson"
                             label="Max. Persons"
@@ -338,7 +372,7 @@ export default function AdminRooms({ loggedUser }) {
                                 :
                                 <button
                                     className="w-full h-[45px] rounded-md bg-[#303030] text-white mb-[5px] font-bold cursor-pointer"
-                                    onClick={() => setIsButtonClicked(true)}
+                                    onClick={persist}
                                 > {dialogTitle == "Edit Room Details" ? "Update Room Details" : dialogTitle}
                                 </button>
                         }
