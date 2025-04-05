@@ -1,25 +1,83 @@
-import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, IconButton, Pagination } from "@mui/material";
-import { useState } from "react";
+import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, IconButton, Pagination, Box, Skeleton } from "@mui/material";
+import { useEffect, useState } from "react";
 import { TiThMenu } from "react-icons/ti";
 import { AiOutlineSearch } from "react-icons/ai";
 import { MdEdit, MdDelete } from "react-icons/md";
 import Tabs from "../../Components/Tabs";
 import SideNavigationDrawer from "../../Components/SideNavigationDrawer";
 import { IoMdAddCircleOutline } from "react-icons/io";
+import Alert from "../../Components/Alert";
+import axios from "axios";
 
 export default function AdminRooms({ loggedUser }) {
 
+    const backendUrl = import.meta.env.VITE_BACKEND_URL;
+    const defaultHeight = 910;
+    const baseRecordCount = 7;
+
+    // Initial RowCount Calculation
+    const getInitialRowCount = () => {
+        const newHeight = window.innerHeight;
+        if (newHeight > defaultHeight) {
+            const reduceHeight = newHeight - defaultHeight;
+            return baseRecordCount + Math.round(reduceHeight / 80);
+        }
+        return baseRecordCount;
+    };
+
     // tab related
-    const tabs = ["Available", "Not Available"];
+    const tabs = ["All", "Enable", "Disable"];
     const [selectedTab, setSelectedTab] = useState(tabs[0]);
     // Drawer Side navigation bar related
     const [isSidebarDrawerOpen, setIsSidebarDrawerOpen] = useState(false);
     const toggleDrawer = (newOpen) => () => setIsSidebarDrawerOpen(newOpen);
     // Table related
+    const [rooms, setRooms] = useState([]);
     const [isLoaded, setIsLoaded] = useState(false);
     const [pageNo, setPageNo] = useState(1);
-    const [totalPages, setTotalPages] = useState(5);
+    const [totalPages, setTotalPages] = useState(0);
+    const [recordCount, setRecordCount] = useState(getInitialRowCount()); // table record count
+    // Alert related
+    const [isAlertOpen, setIsAlertOpen] = useState(false);
+    const [alertType, setAlertType] = useState("");
+    const [alertMessage, setAlertMessage] = useState("");
 
+    // Calculating Record Count when changing window height
+    useEffect(() => {
+        const handleResize = () => {
+            const newHeight = window.innerHeight;
+            if (newHeight > defaultHeight) {
+                const reduceHeight = newHeight - defaultHeight;
+                setRecordCount(baseRecordCount + Math.round(reduceHeight / 80));
+                setIsLoaded(false)
+            } else {
+                setRecordCount(baseRecordCount);
+            }
+        };
+        window.addEventListener("resize", handleResize); // Add Event Listener
+        return () => { // Cleanup
+            window.removeEventListener("resize", handleResize);
+        };
+    }, []);
+
+    // retrieve Record
+    useEffect(() => {
+        if (!isLoaded) {
+            axios.get(`${backendUrl}/api/room`, { params: { type: selectedTab, pageNo: pageNo, recordCount: recordCount } })
+                .then(result => {
+                    setRooms(result.data.rooms);
+                    setTotalPages(result.data.totalPage);
+                    setIsLoaded(true);
+                })
+                .catch(error => {
+                    setUsers([]);
+                    setIsLoaded(true);
+                    setAlertType("error")
+                    setAlertMessage(error.response.data.message)
+                    setIsAlertOpen(true);
+                })
+        }
+    }, [isLoaded])
 
     return (
         <main className="App w-full h-screen flex p-[25px]">
@@ -80,23 +138,59 @@ export default function AdminRooms({ loggedUser }) {
                                 <TableRow sx={{ backgroundColor: "#f5f5f5" }}>
                                     <TableCell align="center" sx={{ backgroundColor: "#f5f5f5", fontWeight: "bold", position: "sticky", top: 0, zIndex: 1 }}>Room</TableCell>
                                     <TableCell align="center" sx={{ backgroundColor: "#f5f5f5", fontWeight: "bold", position: "sticky", top: 0, zIndex: 1 }}>Category</TableCell>
-                                    <TableCell align="center" sx={{ backgroundColor: "#f5f5f5", fontWeight: "bold", position: "sticky", top: 0, zIndex: 1,}}>Maximum</TableCell>
+                                    <TableCell align="center" sx={{ backgroundColor: "#f5f5f5", fontWeight: "bold", position: "sticky", top: 0, zIndex: 1, }}>Maximum</TableCell>
                                     <TableCell align="center" sx={{ backgroundColor: "#f5f5f5", fontWeight: "bold", position: "sticky", top: 0, zIndex: 1 }}>Actions</TableCell>
                                 </TableRow>
                             </TableHead>
 
                             <TableBody>
-                                <TableRow key={1} sx={{ "&:hover": { backgroundColor: "#e8eef8" }, transition: "background-color 0.3s ease" }}>
-                                    
-                                    <TableCell align="center" > No. 101 </TableCell>
-                                    <TableCell align="center" > Standard </TableCell>
-                                    <TableCell align="center" > 3 Persons </TableCell>
-                                    {/* Actions column */}
-                                    <TableCell align="center" >
-                                        <IconButton color="primary"> <MdEdit /> </IconButton> {/* edit button */}
-                                        <IconButton color="error"> <MdDelete /> </IconButton> {/* delete button */}
-                                    </TableCell>
-                                </TableRow>
+                                {   // Table Skeleton
+                                    !isLoaded ?
+                                        Array.from({ length: recordCount }).map((_, index) => (
+                                            <TableRow>
+                                                <TableCell align="center">
+                                                    <Box display="flex" justifyContent="center" width="100%">
+                                                        <Skeleton variant="text" width={80} />
+                                                    </Box>
+                                                </TableCell>
+                                                <TableCell align="center">
+                                                    <Box display="flex" justifyContent="center" width="100%">
+                                                        <Skeleton variant="text" width={80} />
+                                                    </Box>
+                                                </TableCell>
+                                                <TableCell align="center" sx={{ display: { xs: "none", md: "table-cell" } }} >
+                                                    <Box display="flex" justifyContent="center" width="100%">
+                                                        <Skeleton variant="text" width={60} />
+                                                    </Box>
+                                                </TableCell>
+                                                <TableCell align="center">
+                                                    <Box display="flex" justifyContent="center">
+                                                        <Skeleton variant="circular" width={40} height={40} sx={{ mr: 1 }} />
+                                                        <Skeleton variant="circular" width={40} height={40} />
+                                                    </Box>
+                                                </TableCell>
+                                            </TableRow>
+                                        ))
+                                        : // Table Content
+                                        (rooms && rooms.length > 0) ?
+                                            rooms.map((element, index) => {
+                                                return (
+                                                    <TableRow key={index} sx={{ "&:hover": { backgroundColor: "#e8eef8" }, transition: "background-color 0.3s ease" }}>
+                                                        <TableCell align="center" > {"Rs. " + element.number} </TableCell>
+                                                        <TableCell align="center" > {element.category} </TableCell>
+                                                        <TableCell align="center" > {element.maxPerson + " Persons"} </TableCell>
+                                                        <TableCell align="center" >
+                                                            <IconButton color="primary"> <MdEdit /> </IconButton>
+                                                            <IconButton color="error"> <MdDelete /> </IconButton>
+                                                        </TableCell>
+                                                    </TableRow>
+                                                )
+                                            })
+                                            : // Empty Table
+                                            <TableRow>
+                                                <TableCell colSpan={4} align="center">No users found</TableCell>
+                                            </TableRow>
+                                }
                             </TableBody>
 
                         </Table>
@@ -110,6 +204,7 @@ export default function AdminRooms({ loggedUser }) {
                         count={totalPages}
                         onChange={(event, value) => {
                             setPageNo(value);
+                            setIsLoaded(false);
                         }}
                         variant="outlined"
                         color="primary"
@@ -117,6 +212,9 @@ export default function AdminRooms({ loggedUser }) {
                 </div>
 
             </div>
+
+            {/* To display success messages and error messages */}
+            <Alert isAlertOpen={isAlertOpen} type={alertType} message={alertMessage} setIsAlertOpen={setIsAlertOpen} />
         </main>
     )
 }
