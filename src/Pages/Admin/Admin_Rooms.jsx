@@ -148,8 +148,8 @@ export default function AdminRooms({ loggedUser }) {
             })
     }
 
-    // Find by id for 
-    function findByInput(number, purpose) {
+    // Find by room number
+    function findByNumber(number, purpose) {
         axios.get(`${backendUrl}/api/room/number/${number}`)
             .then(result => {
                 if (purpose == "search") {
@@ -161,9 +161,39 @@ export default function AdminRooms({ loggedUser }) {
                     setDialogTitle("Edit Room Details");
                     setIsDialogOpen(true);
                 }
-
             })
             .catch(error => {
+                setAlertType("error")
+                setAlertMessage(error.response.data.message)
+                setIsAlertOpen(true);
+            })
+    }
+
+    // Update room
+    function update() {
+        setIsButtonClicked(true);
+
+        if (room.category == "" || !numberRegex.test(room.number) || !numberRegex.test(room.maxPerson)) {
+            return
+        }
+
+        if (JSON.stringify(room) === JSON.stringify(currentRoom)) {
+            setRoomError("No any Changes")
+            return
+        }
+
+        setIsButtonLoading(true)
+        axios.put(`${backendUrl}/api/room`, room, { headers: { Authorization: `Bearer ${token}` } })
+            .then(result => {
+                setIsDialogOpen(false);
+                setAlertType("success")
+                setAlertMessage(result.data.message)
+                setIsAlertOpen(true);
+                setIsLoaded(false);
+                setIsButtonLoading(false);
+            })
+            .catch(error => {
+                setIsButtonLoading(false);
                 setAlertType("error")
                 setAlertMessage(error.response.data.message)
                 setIsAlertOpen(true);
@@ -223,7 +253,7 @@ export default function AdminRooms({ loggedUser }) {
                                 placeholder="Search"
                                 className="w-full h-10 pl-10 pr-4 border border-gray-600 rounded-lg text-gray-900 outline-none transition-all placeholder-gray-600"
                                 onChange={(e) => setSearchValue(e.target.value)}
-                                onKeyDown={(e) => e.key === "Enter" ? findByInput(searchValue, "search") : ""}
+                                onKeyDown={(e) => e.key === "Enter" ? findByNumber(searchValue, "search") : ""}
                             />
                         </div>
                     </div>
@@ -280,7 +310,7 @@ export default function AdminRooms({ loggedUser }) {
                                                         <TableCell align="center" > {element.category} </TableCell>
                                                         <TableCell align="center" > {element.maxPerson} </TableCell>
                                                         <TableCell align="center" >
-                                                            <IconButton color="primary" onClick={() => findByInput(element.number, "get room details")}> <MdEdit /> </IconButton>
+                                                            <IconButton color="primary" onClick={() => findByNumber(element.number, "get room details")}> <MdEdit /> </IconButton>
                                                             <IconButton color="error"> <MdDelete /> </IconButton>
                                                         </TableCell>
                                                     </TableRow>
@@ -360,6 +390,7 @@ export default function AdminRooms({ loggedUser }) {
                             onChange={handleInputChange}
                             error={isButtonClicked && !numberRegex.test(room.number) || roomError == "Room number is already used"}
                             helperText={`${isButtonClicked && !numberRegex.test(room.number) ? "Enter Valid number" : roomError == "Room number is already used" ? "This Room number is already used" : ""}`}
+                            disabled={dialogTitle != "Add New Room"}
                         />
                     </div>
 
@@ -377,6 +408,7 @@ export default function AdminRooms({ loggedUser }) {
                         />
                     </div>
 
+                    {/* Disable */}
                     <div className={`flex ml-[5px] mb-[10px] ${dialogTitle == "Edit Room Details" ? "block" : "hidden"}`}>
                         <FormControlLabel
                             control={
@@ -398,7 +430,7 @@ export default function AdminRooms({ loggedUser }) {
                                 :
                                 <button
                                     className="w-full h-[45px] rounded-md bg-[#303030] text-white mb-[5px] font-bold cursor-pointer"
-                                    onClick={persist}
+                                    onClick={dialogTitle == "Add New Room" ? persist : update}
                                 > {dialogTitle == "Edit Room Details" ? "Update Room Details" : dialogTitle}
                                 </button>
                         }
