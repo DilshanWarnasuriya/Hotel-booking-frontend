@@ -1,4 +1,4 @@
-import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Avatar, Box, Typography, IconButton, Pagination, Skeleton, Dialog, DialogTitle, DialogContent, TextField, FormControl, Select, MenuItem, InputLabel, FormHelperText } from "@mui/material";
+import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Avatar, Box, Typography, IconButton, Pagination, Skeleton, Dialog, DialogTitle, DialogContent, TextField, FormControl, Select, MenuItem, InputLabel, FormHelperText, FormControlLabel, Checkbox } from "@mui/material";
 import { useEffect, useState } from "react";
 import { TiThMenu, TiUserAdd } from "react-icons/ti";
 import { AiOutlineSearch } from "react-icons/ai";
@@ -61,7 +61,6 @@ export default function AdminUsers({ loggedUser }) {
     // Confirmation Alert related
     const [isConfirmationAlertOpen, setIsConfirmationAlertOpen] = useState(false);
     const [confirmationAlertType, setConfirmationAlertType] = useState("");
-
     const [selectItem, setSelectItem] = useState(null);
 
     // Calculating Record Count when changing window height
@@ -181,8 +180,9 @@ export default function AdminUsers({ loggedUser }) {
             return
         }
 
-        if (currentUser.title == user.title || currentUser.firstName == user.firstName || currentUser.lastName == user.lastName || currentUser.email == user.email || currentUser.contactNo == user.contactNo || currentUser.type == user.type) {
-            setUserError("No any Changes")
+        // check current category and edited category are same
+        if (JSON.stringify(user) === JSON.stringify(currentUser)) {
+            setCategoryError("No any Changes")
             return
         }
 
@@ -464,7 +464,7 @@ export default function AdminUsers({ loggedUser }) {
 
                     </div>
 
-                    <div className="flex mb-[15px]">
+                    <div className="flex mb-[10px]">
                         <FormControl style={{ width: "200px" }}>
                             <InputLabel error={isButtonClicked && user.title == ""}>Gender</InputLabel>
                             <Select
@@ -494,6 +494,15 @@ export default function AdminUsers({ loggedUser }) {
                             </Select>
                             <FormHelperText error>{isButtonClicked && user.type == "" ? "Select User Type" : ""}</FormHelperText>
                         </FormControl>
+                    </div>
+
+                    <div className={`flex ml-[5px] mb-[10px] ${dialogTitle == "Edit User Details" ? "block" : "hidden"}`}>
+                        <FormControlLabel
+                            control={
+                                <Checkbox checked={user.disabled} onChange={(e) => setUser(prev => ({ ...prev, disabled: e.target.checked ? true : false }))} />
+                            }
+                            label="Disable"
+                        />
                     </div>
 
                     {/* button  */}
