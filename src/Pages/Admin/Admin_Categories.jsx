@@ -47,6 +47,7 @@ export default function AdminCategories({ loggedUser }) {
     const [confirmationAlertType, setConfirmationAlertType] = useState("");
     const [selectItem, setSelectItem] = useState(null);
 
+    // retrieve Record
     useEffect(() => {
         if (!isLoaded) {
             axios.get(`${backendUrl}/api/category`)
@@ -64,6 +65,7 @@ export default function AdminCategories({ loggedUser }) {
         }
     })
 
+    // handle images in dialog
     function handleSelectImages(e) {
 
         const newFiles = Array.from(e.target.files); // Convert FileList to array
@@ -85,6 +87,7 @@ export default function AdminCategories({ loggedUser }) {
         }
     }
 
+    // handle all inputs in dialog
     function handleInputChange(e) {
         const { name, value } = e.target
         setCategory(prev => ({ ...prev, [name]: value }));

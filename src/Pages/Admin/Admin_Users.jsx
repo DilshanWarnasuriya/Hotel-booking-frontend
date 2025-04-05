@@ -317,10 +317,14 @@ export default function AdminUsers({ loggedUser }) {
                                                     </Box>
                                                 </TableCell>
                                                 <TableCell align="center">
-                                                    <Skeleton variant="text" width={80} />
+                                                    <Box display="flex" justifyContent="center" width="100%">
+                                                        <Skeleton variant="text" width={80} />
+                                                    </Box>
                                                 </TableCell>
-                                                <TableCell align="center">
-                                                    <Skeleton variant="text" width={60} />
+                                                <TableCell align="center" sx={{ display: { xs: "none", md: "table-cell" } }} >
+                                                    <Box display="flex" justifyContent="center" width="100%">
+                                                        <Skeleton variant="text" width={60} />
+                                                    </Box>
                                                 </TableCell>
                                                 <TableCell align="center">
                                                     <Box display="flex" justifyContent="center">
