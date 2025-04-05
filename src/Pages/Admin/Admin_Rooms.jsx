@@ -1,4 +1,4 @@
-import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, IconButton, Pagination, Box, Skeleton } from "@mui/material";
+import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, IconButton, Pagination, Box, Skeleton, TextField, FormControl, Select, MenuItem, InputLabel, FormHelperText, FormControlLabel, Checkbox, Dialog, DialogTitle, DialogContent } from "@mui/material";
 import { useEffect, useState } from "react";
 import { TiThMenu } from "react-icons/ti";
 import { AiOutlineSearch } from "react-icons/ai";
@@ -8,10 +8,12 @@ import SideNavigationDrawer from "../../Components/SideNavigationDrawer";
 import { IoMdAddCircleOutline } from "react-icons/io";
 import Alert from "../../Components/Alert";
 import axios from "axios";
+import { IoClose } from "react-icons/io5";
 
 export default function AdminRooms({ loggedUser }) {
 
     const backendUrl = import.meta.env.VITE_BACKEND_URL;
+    const numberRegex = /^\d+$/;
     const defaultHeight = 910;
     const baseRecordCount = 7;
 
@@ -41,6 +43,16 @@ export default function AdminRooms({ loggedUser }) {
     const [isAlertOpen, setIsAlertOpen] = useState(false);
     const [alertType, setAlertType] = useState("");
     const [alertMessage, setAlertMessage] = useState("");
+    // Add and Update room Dialog related
+    const [isDialogOpen, setIsDialogOpen] = useState(false);
+    const [dialogTitle, setDialogTitle] = useState("");
+    const initialRoom = { number: "", category: "", maxPerson: "", disabled: false }; // Room structure
+    const [room, setRoom] = useState(initialRoom);
+    const [roomError, setRoomError] = useState("");
+    const [isButtonClicked, setIsButtonClicked] = useState(false);
+    const [isButtonLoading, setIsButtonLoading] = useState(false);
+    const [currentRoom, setCurrentRoom] = useState(initialRoom);
+    const [categories, setCategories] = useState([]);
 
     // Calculating Record Count when changing window height
     useEffect(() => {
@@ -70,14 +82,36 @@ export default function AdminRooms({ loggedUser }) {
                     setIsLoaded(true);
                 })
                 .catch(error => {
-                    setUsers([]);
+                    setRooms([]);
                     setIsLoaded(true);
                     setAlertType("error")
                     setAlertMessage(error.response.data.message)
                     setIsAlertOpen(true);
                 })
+
+            // get all categories
+            axios.get(`${backendUrl}/api/category`)
+                .then(result => {
+                    setCategories(result.data);
+                    setIsLoaded(true);
+                })
+                .catch(error => {
+                    setCategories([]);
+                    setIsLoaded(true);
+                    setAlertType("error");
+                    setAlertMessage(error.response.data.message);
+                    setIsAlertOpen(true);
+                })
         }
     }, [isLoaded])
+
+    // handle all inputs in dialog
+    function handleInputChange(e) {
+        const { name, value } = e.target;
+        setRoom(prev => ({ ...prev, [name]: value }))
+        setRoomError("")
+    }
+
 
     return (
         <main className="App w-full h-screen flex p-[25px]">
@@ -100,10 +134,16 @@ export default function AdminRooms({ loggedUser }) {
                             <span className="text-[16px] text-gray-700">See information about all rooms</span>
                         </div>
                     </div>
-                    {/* Add user Button */}
+                    {/* Add room Button */}
                     <div className="mr-[20px]">
                         <button className="bg-[#212121] text-white py-[12px] px-[20px] rounded-lg text-[14px] flex items-center font-bold cursor-pointer"
-                            onClick={() => { }}>
+                            onClick={() => {
+                                setRoom(initialRoom);
+                                setRoomError("")
+                                setDialogTitle("Add New Room");
+                                setIsButtonClicked(false);
+                                setIsDialogOpen(true);
+                            }}>
                             <IoMdAddCircleOutline size={20} className="mr-[10px]" />  {/* icon */}
                             ADD NEW ROOM
                         </button>
@@ -147,7 +187,7 @@ export default function AdminRooms({ loggedUser }) {
                                 {   // Table Skeleton
                                     !isLoaded ?
                                         Array.from({ length: recordCount }).map((_, index) => (
-                                            <TableRow>
+                                            <TableRow key={index}>
                                                 <TableCell align="center">
                                                     <Box display="flex" justifyContent="center" width="100%">
                                                         <Skeleton variant="text" width={80} />
@@ -188,7 +228,7 @@ export default function AdminRooms({ loggedUser }) {
                                             })
                                             : // Empty Table
                                             <TableRow>
-                                                <TableCell colSpan={4} align="center">No users found</TableCell>
+                                                <TableCell colSpan={4} align="center">No rooms found</TableCell>
                                             </TableRow>
                                 }
                             </TableBody>
@@ -212,6 +252,102 @@ export default function AdminRooms({ loggedUser }) {
                 </div>
 
             </div>
+
+            {/* Add and Update room Dialog */}
+            <Dialog open={isDialogOpen} >
+
+                <div className="flex justify-between items-center">
+                    <DialogTitle> {dialogTitle} </DialogTitle>
+                    <IconButton style={{ marginRight: "10px" }} onClick={() => setIsDialogOpen(false)}> <IoClose /> </IconButton>
+                </div>
+
+                <DialogContent dividers>
+
+                    {/* Select Category */}
+                    <div className="flex mb-[15px]">
+                        <FormControl style={{ width: "300px" }}>
+                            <InputLabel error={isButtonClicked && room.category == ""}>Category</InputLabel>
+                            <Select
+                                name="category"
+                                label="Category"
+                                value={room.category}
+                                onChange={handleInputChange}
+                                error={isButtonClicked && room.category == ""}
+                            >
+                                {
+                                    (categories && categories.length > 0)
+                                        ? categories.map((element, index) => {
+                                            return (
+                                                <MenuItem key={index} value={element.name}>{element.name}</MenuItem>
+                                            )
+                                        })
+                                        : <MenuItem value=""> No category </MenuItem>
+                                }
+
+                            </Select>
+                            <FormHelperText error>{isButtonClicked && room.category == "" ? "Select category" : ""}</FormHelperText>
+                        </FormControl>
+                    </div>
+
+                    {/* Room Number */}
+                    <div className="flex mb-[15px]">
+                        <TextField
+                            name="number"
+                            label="Number"
+                            variant="outlined"
+                            style={{ width: "300px" }}
+                            value={room.number}
+                            onChange={handleInputChange}
+                            error={isButtonClicked && !numberRegex.test(room.number)}
+                            helperText={`${isButtonClicked && !numberRegex.test(room.number) ? "Enter Valid number" : ""}`}
+                        />
+                    </div>
+
+                    {/* Maximum person count */}
+                    <div className="flex mb-[15px]">
+                        <TextField
+                            name="maxPerson"
+                            label="Max. Persons"
+                            variant="outlined"
+                            style={{ width: "300px" }}
+                            value={room.maxPerson}
+                            onChange={handleInputChange}
+                            error={isButtonClicked && !numberRegex.test(room.maxPerson)}
+                            helperText={`${isButtonClicked && !numberRegex.test(room.maxPerson) ? "Enter Valid count" : ""}`}
+                        />
+                    </div>
+
+                    <div className={`flex ml-[5px] mb-[10px] ${dialogTitle == "Edit Room Details" ? "block" : "hidden"}`}>
+                        <FormControlLabel
+                            control={
+                                <Checkbox checked={room.disabled} onChange={(e) => setRoom(prev => ({ ...prev, disabled: e.target.checked ? true : false }))} />
+                            }
+                            label="Disable"
+                        />
+                    </div>
+
+                    {/* button  */}
+                    <div className="flex flex-col items-center">
+                        {
+                            isButtonLoading
+                                ?
+                                <button className="w-full h-[45px] rounded-md bg-[#303030b7] text-white mb-[5px] font-bold flex justify-center items-center">
+                                    <Tailspin size="20" stroke="3" speed="0.9" color="white" />
+                                    <span className="ml-[10px]">Loading....</span>
+                                </button>
+                                :
+                                <button
+                                    className="w-full h-[45px] rounded-md bg-[#303030] text-white mb-[5px] font-bold cursor-pointer"
+                                    onClick={() => setIsButtonClicked(true)}
+                                > {dialogTitle == "Edit Room Details" ? "Update Room Details" : dialogTitle}
+                                </button>
+                        }
+                        <span className="text-red-500"> {roomError == "No any Changes" ? "No any Changes" : ""}</span>
+                    </div>
+
+                </DialogContent>
+
+            </Dialog>
 
             {/* To display success messages and error messages */}
             <Alert isAlertOpen={isAlertOpen} type={alertType} message={alertMessage} setIsAlertOpen={setIsAlertOpen} />
