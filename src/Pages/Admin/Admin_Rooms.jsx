@@ -11,6 +11,7 @@ import axios from "axios";
 import { IoClose } from "react-icons/io5";
 import { Tailspin } from "ldrs/react";
 import 'ldrs/react/Tailspin.css'
+import ConfirmationAlert from "../../Components/ConfirmationAlert";
 
 export default function AdminRooms({ loggedUser }) {
 
@@ -56,7 +57,10 @@ export default function AdminRooms({ loggedUser }) {
     const [isButtonLoading, setIsButtonLoading] = useState(false);
     const [currentRoom, setCurrentRoom] = useState(initialRoom);
     const [categories, setCategories] = useState([]);
-
+    // Confirmation Alert related
+    const [isConfirmationAlertOpen, setIsConfirmationAlertOpen] = useState(false);
+    const [confirmationAlertType, setConfirmationAlertType] = useState("");
+    const [selectItem, setSelectItem] = useState(null);
     const [searchValue, setSearchValue] = useState("");
 
     // Calculating Record Count when changing window height
@@ -200,6 +204,24 @@ export default function AdminRooms({ loggedUser }) {
             })
     }
 
+    // Remove room
+    function remove() {
+        axios.delete(`${backendUrl}/api/room/${selectItem}`, { headers: { Authorization: `Bearer ${token}` } })
+            .then(result => {
+                setConfirmationAlertType("")
+                setIsConfirmationAlertOpen(false)
+                setAlertType("success")
+                setAlertMessage(result.data.message)
+                setIsAlertOpen(true);
+                setIsLoaded(false);
+            })
+            .catch(error => {
+                setAlertType("error")
+                setAlertMessage(error.response.data.message)
+                setIsAlertOpen(true);
+            })
+    }
+
 
     return (
         <main className="App w-full h-screen flex p-[25px]">
@@ -311,7 +333,11 @@ export default function AdminRooms({ loggedUser }) {
                                                         <TableCell align="center" > {element.maxPerson} </TableCell>
                                                         <TableCell align="center" >
                                                             <IconButton color="primary" onClick={() => findByNumber(element.number, "get room details")}> <MdEdit /> </IconButton>
-                                                            <IconButton color="error"> <MdDelete /> </IconButton>
+                                                            <IconButton color="error" onClick={() => {
+                                                                setSelectItem(element.number);
+                                                                setConfirmationAlertType("Delete")
+                                                                setIsConfirmationAlertOpen(true)
+                                                            }}> <MdDelete /> </IconButton>
                                                         </TableCell>
                                                     </TableRow>
                                                 )
@@ -443,6 +469,10 @@ export default function AdminRooms({ loggedUser }) {
 
             {/* To display success messages and error messages */}
             <Alert isAlertOpen={isAlertOpen} type={alertType} message={alertMessage} setIsAlertOpen={setIsAlertOpen} />
+
+            {/* To display Confirm messages to remove category */}
+            <ConfirmationAlert open={isConfirmationAlertOpen} type={confirmationAlertType} action={remove} setIsConfirmationAlertOpen={setIsConfirmationAlertOpen} isButtonLoading={isButtonLoading} />
+            
         </main>
     )
 }
