@@ -57,6 +57,8 @@ export default function AdminRooms({ loggedUser }) {
     const [currentRoom, setCurrentRoom] = useState(initialRoom);
     const [categories, setCategories] = useState([]);
 
+    const [searchValue, setSearchValue] = useState("");
+
     // Calculating Record Count when changing window height
     useEffect(() => {
         const handleResize = () => {
@@ -146,6 +148,28 @@ export default function AdminRooms({ loggedUser }) {
             })
     }
 
+    // Find by id for 
+    function findByInput(number, purpose) {
+        axios.get(`${backendUrl}/api/room/number/${number}`)
+            .then(result => {
+                if (purpose == "search") {
+                    setRooms([result.data.room]);
+                }
+                else {
+                    setRoom(result.data.room);
+                    setCurrentRoom(result.data.room)
+                    setDialogTitle("Edit Room Details");
+                    setIsDialogOpen(true);
+                }
+
+            })
+            .catch(error => {
+                setAlertType("error")
+                setAlertMessage(error.response.data.message)
+                setIsAlertOpen(true);
+            })
+    }
+
 
     return (
         <main className="App w-full h-screen flex p-[25px]">
@@ -198,6 +222,8 @@ export default function AdminRooms({ loggedUser }) {
                                 type="search"
                                 placeholder="Search"
                                 className="w-full h-10 pl-10 pr-4 border border-gray-600 rounded-lg text-gray-900 outline-none transition-all placeholder-gray-600"
+                                onChange={(e) => setSearchValue(e.target.value)}
+                                onKeyDown={(e) => e.key === "Enter" ? findByInput(searchValue, "search") : ""}
                             />
                         </div>
                     </div>
@@ -254,7 +280,7 @@ export default function AdminRooms({ loggedUser }) {
                                                         <TableCell align="center" > {element.category} </TableCell>
                                                         <TableCell align="center" > {element.maxPerson} </TableCell>
                                                         <TableCell align="center" >
-                                                            <IconButton color="primary"> <MdEdit /> </IconButton>
+                                                            <IconButton color="primary" onClick={() => findByInput(element.number, "get room details")}> <MdEdit /> </IconButton>
                                                             <IconButton color="error"> <MdDelete /> </IconButton>
                                                         </TableCell>
                                                     </TableRow>
