@@ -1,7 +1,6 @@
 import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Avatar, Box, Typography, IconButton, Pagination, Skeleton } from "@mui/material";
 import { useEffect, useState } from "react";
-import { TiThMenu, TiUserAdd } from "react-icons/ti";
-import { AiOutlineSearch } from "react-icons/ai";
+import { TiThMenu } from "react-icons/ti";
 import { MdDelete } from "react-icons/md";
 import Tabs from "../../Components/Tabs";
 import SideNavigationDrawer from "../../Components/SideNavigationDrawer";
@@ -104,6 +103,7 @@ export default function AdminReviews({ loggedUser }) {
             })
     }
 
+    // Remove Review
     function remove() {
         axios.delete(`${backendUrl}/api/review/${selectItem}`, { headers: { Authorization: `Bearer ${token}` } })
             .then(result => {
