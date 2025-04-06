@@ -1,24 +1,82 @@
-import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Avatar, Box, Typography, IconButton, Pagination } from "@mui/material";
-import { useState } from "react";
+import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Avatar, Box, Typography, IconButton, Pagination, Skeleton } from "@mui/material";
+import { useEffect, useState } from "react";
 import { TiThMenu, TiUserAdd } from "react-icons/ti";
 import { AiOutlineSearch } from "react-icons/ai";
-import { MdEdit, MdDelete } from "react-icons/md";
+import { MdDelete } from "react-icons/md";
 import Tabs from "../../Components/Tabs";
-import Badge from "../../Components/Badge";
 import SideNavigationDrawer from "../../Components/SideNavigationDrawer";
+import axios from "axios";
+import Alert from "../../Components/Alert";
 
 export default function AdminReviews({ loggedUser }) {
 
+    const backendUrl = import.meta.env.VITE_BACKEND_URL;
+    const defaultHeight = 910;
+    const baseRecordCount = 7;
+
+    // Initial RowCount Calculation
+    const getInitialRowCount = () => {
+        const newHeight = window.innerHeight;
+        if (newHeight > defaultHeight) {
+            const reduceHeight = newHeight - defaultHeight;
+            return baseRecordCount + Math.round(reduceHeight / 80);
+        }
+        return baseRecordCount;
+    };
+
     // tab related
-    const tabs = ["Client", "Admin", "Disable"];
+    const tabs = ["All", "Enable", "Disable"];
     const [selectedTab, setSelectedTab] = useState(tabs[0]);
     // Drawer Side navigation bar related
     const [isSidebarDrawerOpen, setIsSidebarDrawerOpen] = useState(false);
     const toggleDrawer = (newOpen) => () => setIsSidebarDrawerOpen(newOpen);
     // Table related
+    const [reviews, setReviews] = useState([]);
     const [isLoaded, setIsLoaded] = useState(false);
     const [pageNo, setPageNo] = useState(1);
-    const [totalPages, setTotalPages] = useState(5);
+    const [totalPages, setTotalPages] = useState(0);
+    const [recordCount, setRecordCount] = useState(getInitialRowCount()); // table record count
+    // Alert related
+    const [isAlertOpen, setIsAlertOpen] = useState(false);
+    const [alertType, setAlertType] = useState("");
+    const [alertMessage, setAlertMessage] = useState("");
+
+    // Calculating Record Count when changing window height
+    useEffect(() => {
+        const handleResize = () => {
+            const newHeight = window.innerHeight;
+            if (newHeight > defaultHeight) {
+                const reduceHeight = newHeight - defaultHeight;
+                setRecordCount(baseRecordCount + Math.round(reduceHeight / 80));
+                setIsLoaded(false)
+            } else {
+                setRecordCount(baseRecordCount);
+            }
+        };
+        window.addEventListener("resize", handleResize); // Add Event Listener
+        return () => { // Cleanup
+            window.removeEventListener("resize", handleResize);
+        };
+    }, []);
+
+    // retrieve Record
+    useEffect(() => {
+        if (!isLoaded) {
+            axios.get(`${backendUrl}/api/review`, { params: { type: selectedTab, pageNo: pageNo, recordCount: recordCount } })
+                .then(result => {
+                    setReviews(result.data.reviews);
+                    setTotalPages(result.data.totalPage);
+                    setIsLoaded(true);
+                })
+                .catch(error => {
+                    setReviews([]);
+                    setIsLoaded(true);
+                    setAlertType("error")
+                    setAlertMessage(error.response.data.message)
+                    setIsAlertOpen(true);
+                })
+        }
+    }, [isLoaded])
 
 
     return (
@@ -48,7 +106,7 @@ export default function AdminReviews({ loggedUser }) {
                 <div className="w-full h-[90px] flex justify-between items-center bg-red-">
                     {/* Tabs */}
                     <div className="ml-[20px]">
-                        <Tabs tabs={tabs} selectedTab={selectedTab} setSelectedTab={setSelectedTab} setIsLoaded={setIsLoaded} />
+                        <Tabs tabs={tabs} selectedTab={selectedTab} setSelectedTab={setSelectedTab} setPageNo={setPageNo} setIsLoaded={setIsLoaded} />
                     </div>
                     {/* Search */}
                     <div className="mr-[20px]">
@@ -78,36 +136,80 @@ export default function AdminReviews({ loggedUser }) {
                             </TableHead>
 
                             <TableBody>
-                                <TableRow key={1} sx={{ "&:hover": { backgroundColor: "#e8eef8" }, transition: "background-color 0.3s ease" }}>
-                                    {/* User column */}
-                                    <TableCell component="th" scope="row">
-                                        <Box display="flex" alignItems="center">
-                                            <Avatar src="https://media.istockphoto.com/id/870079648/photo/seeing-things-in-a-positive-light.jpg?s=170667a&w=0&k=20&c=0p7KCODmXjvX-9JkkrHg9SPL0zojHb_8ygOfPylt3W8=" sx={{ width: 45, height: 45 }} />  {/* User image */}
-                                            <Box sx={{ ml: 2 }}>
-                                                <Typography fontWeight="bold" noWrap> Mr. Yashoda Dilshan </Typography> {/* User Name */}
-                                                <Typography variant="body2" color="text.secondary" noWrap> yashodadilshan@gmail.com </Typography> {/* User Email */}
-                                            </Box>
-                                        </Box>
-                                    </TableCell>
-                                    {/* Rating number */}
-                                    <TableCell align="center" > 5 </TableCell>
-                                    {/* Comment */}
-                                    <TableCell align="center" sx={{ display: { xs: "none", md: "table-cell" } }}>
-                                        <div className="flex justify-center items-center">
-                                            <p className="max-w-[600px] text-justify">Great location and friendly staff! Room was clean and comfortable. Loved the view from the balcony. Breakfast was okay, could use more options. Would definitely stay here again!</p>
-                                        </div>
-                                    </TableCell>
-                                    {/* Actions column */}
-                                    <TableCell align="center" >
-                                        <div className="flex justify-center items-center">
-                                            <label className="inline-flex items-center cursor-pointer mr-[5px]">
-                                                <input type="checkbox" value="" className="sr-only peer" />
-                                                <div className="relative w-9 h-5 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600"></div>
-                                            </label>
-                                            <IconButton color="error"> <MdDelete /> </IconButton> {/* delete button */}
-                                        </div>
-                                    </TableCell>
-                                </TableRow>
+
+                                {
+                                    !isLoaded ?
+                                        Array.from({ length: recordCount }).map((_, index) => (
+                                            <TableRow key={index}>
+                                                <TableCell component="th" scope="row">
+                                                    <Box display="flex" alignItems="center">
+                                                        <Skeleton variant="circular" width={45} height={45} />
+                                                        <Box sx={{ ml: 2 }}>
+                                                            <Skeleton variant="text" width={120} />
+                                                            <Skeleton variant="text" width={160} />
+                                                        </Box>
+                                                    </Box>
+                                                </TableCell>
+                                                <TableCell align="center">
+                                                    <Box display="flex" justifyContent="center" width="100%">
+                                                        <Skeleton variant="text" width={80} />
+                                                    </Box>
+                                                </TableCell>
+                                                <TableCell align="center" sx={{ display: { xs: "none", md: "table-cell" } }} >
+                                                    <Box display="flex" justifyContent="center" width="100%">
+                                                        <Skeleton variant="text" width={60} />
+                                                    </Box>
+                                                </TableCell>
+                                                <TableCell align="center">
+                                                    <Box display="flex" justifyContent="center">
+                                                        <Skeleton variant="circular" width={40} height={40} sx={{ mr: 1 }} />
+                                                        <Skeleton variant="circular" width={40} height={40} />
+                                                    </Box>
+                                                </TableCell>
+                                            </TableRow>
+                                        ))
+                                        :
+                                        (reviews && reviews.length > 0) ?
+                                            reviews.map((element, index) => {
+                                                return (
+                                                    <TableRow key={index} sx={{ "&:hover": { backgroundColor: "#e8eef8" }, transition: "background-color 0.3s ease" }}>
+                                                        {/* User column */}
+                                                        <TableCell component="th" scope="row">
+                                                            <Box display="flex" alignItems="center">
+                                                                <Avatar src={element.image} sx={{ width: 45, height: 45 }} />  {/* User image */}
+                                                                <Box sx={{ ml: 2 }}>
+                                                                    <Typography fontWeight="bold" noWrap> {element.name} </Typography> {/* User Name */}
+                                                                    <Typography variant="body2" color="text.secondary" noWrap> {element.email} </Typography> {/* User Email */}
+                                                                </Box>
+                                                            </Box>
+                                                        </TableCell>
+                                                        {/* Rating number */}
+                                                        <TableCell align="center" > 5 </TableCell>
+                                                        {/* Comment */}
+                                                        <TableCell align="center" sx={{ display: { xs: "none", md: "table-cell" } }}>
+                                                            <div className="flex justify-center items-center">
+                                                                <p className="max-w-[600px] text-justify">{element.comment}</p>
+                                                            </div>
+                                                        </TableCell>
+                                                        {/* Actions column */}
+                                                        <TableCell align="center" >
+                                                            <div className="flex justify-center items-center">
+                                                                <label className="inline-flex items-center cursor-pointer mr-[5px]">
+                                                                    <input type="checkbox" defaultChecked={element.disabled != true} className="sr-only peer" />
+                                                                    <div className="relative w-9 h-5 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#3063ba]"></div>
+                                                                </label>
+                                                                <IconButton color="error"> <MdDelete /> </IconButton> {/* delete button */}
+                                                            </div>
+                                                        </TableCell>
+                                                    </TableRow>
+                                                )
+                                            })
+                                            : // Empty Table
+                                            <TableRow>
+                                                <TableCell colSpan={4} align="center">No rooms found</TableCell>
+                                            </TableRow>
+                                }
+
                             </TableBody>
 
                         </Table>
@@ -128,6 +230,9 @@ export default function AdminReviews({ loggedUser }) {
                 </div>
 
             </div>
+
+            {/* To display success messages and error messages */}
+            <Alert isAlertOpen={isAlertOpen} type={alertType} message={alertMessage} setIsAlertOpen={setIsAlertOpen} />
         </main>
     )
 }
