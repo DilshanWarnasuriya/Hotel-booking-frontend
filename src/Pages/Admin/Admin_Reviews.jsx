@@ -11,6 +11,7 @@ import Alert from "../../Components/Alert";
 export default function AdminReviews({ loggedUser }) {
 
     const backendUrl = import.meta.env.VITE_BACKEND_URL;
+    const token = import.meta.env.VITE_TOKEN
     const defaultHeight = 910;
     const baseRecordCount = 7;
 
@@ -77,6 +78,25 @@ export default function AdminReviews({ loggedUser }) {
                 })
         }
     }, [isLoaded])
+
+    // Review Enable and Disable
+    function update(id, check) {
+        const body = { id: id, message: check == true ? "enable" : "disable" }
+
+        axios.put(`${backendUrl}/api/review`, body, { headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" } })
+            .then(result => {
+                setAlertType("success")
+                setAlertMessage(result.data.message)
+                setIsAlertOpen(true);
+                setIsLoaded(false);
+            })
+            .catch(error => {
+                setAlertType("error")
+                setAlertMessage(error.response.data.message)
+                setIsAlertOpen(true);
+                setIsLoaded(false);
+            })
+    }
 
 
     return (
@@ -195,7 +215,7 @@ export default function AdminReviews({ loggedUser }) {
                                                         <TableCell align="center" >
                                                             <div className="flex justify-center items-center">
                                                                 <label className="inline-flex items-center cursor-pointer mr-[5px]">
-                                                                    <input type="checkbox" defaultChecked={element.disabled != true} className="sr-only peer" />
+                                                                    <input type="checkbox" defaultChecked={element.disabled != true} className="sr-only peer" onChange={(e) => update(element.id, e.target.checked)} />
                                                                     <div className="relative w-9 h-5 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#3063ba]"></div>
                                                                 </label>
                                                                 <IconButton color="error"> <MdDelete /> </IconButton> {/* delete button */}
