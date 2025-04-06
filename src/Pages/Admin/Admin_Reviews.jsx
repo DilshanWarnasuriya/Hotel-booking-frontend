@@ -7,6 +7,7 @@ import Tabs from "../../Components/Tabs";
 import SideNavigationDrawer from "../../Components/SideNavigationDrawer";
 import axios from "axios";
 import Alert from "../../Components/Alert";
+import ConfirmationAlert from "../../Components/ConfirmationAlert";
 
 export default function AdminReviews({ loggedUser }) {
 
@@ -41,6 +42,11 @@ export default function AdminReviews({ loggedUser }) {
     const [isAlertOpen, setIsAlertOpen] = useState(false);
     const [alertType, setAlertType] = useState("");
     const [alertMessage, setAlertMessage] = useState("");
+    // Confirmation Alert related
+    const [isConfirmationAlertOpen, setIsConfirmationAlertOpen] = useState(false);
+    const [confirmationAlertType, setConfirmationAlertType] = useState("");
+    const [selectItem, setSelectItem] = useState(null);
+    const [isButtonLoading, setIsButtonLoading] = useState(false);
 
     // Calculating Record Count when changing window height
     useEffect(() => {
@@ -95,6 +101,24 @@ export default function AdminReviews({ loggedUser }) {
                 setAlertMessage(error.response.data.message)
                 setIsAlertOpen(true);
                 setIsLoaded(false);
+            })
+    }
+
+    function remove() {
+        axios.delete(`${backendUrl}/api/review/${selectItem}`, { headers: { Authorization: `Bearer ${token}` } })
+            .then(result => {
+                setConfirmationAlertType("")
+                setIsConfirmationAlertOpen(false)
+                setIsButtonLoading(false)
+                setAlertType("success")
+                setAlertMessage(result.data.message)
+                setIsAlertOpen(true);
+                setIsLoaded(false);
+            })
+            .catch(error => {
+                setAlertType("error")
+                setAlertMessage(error.response.data.message)
+                setIsAlertOpen(true);
             })
     }
 
@@ -202,7 +226,11 @@ export default function AdminReviews({ loggedUser }) {
                                                                     <input type="checkbox" defaultChecked={element.disabled != true} className="sr-only peer" onChange={(e) => update(element.id, e.target.checked)} />
                                                                     <div className="relative w-9 h-5 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#3063ba]"></div>
                                                                 </label>
-                                                                <IconButton color="error"> <MdDelete /> </IconButton> {/* delete button */}
+                                                                <IconButton color="error" onClick={() => {
+                                                                    setSelectItem(element.id)
+                                                                    setConfirmationAlertType("Delete")
+                                                                    setIsConfirmationAlertOpen(true)
+                                                                }}> <MdDelete /> </IconButton> {/* delete button */}
                                                             </div>
                                                         </TableCell>
                                                     </TableRow>
@@ -237,6 +265,10 @@ export default function AdminReviews({ loggedUser }) {
 
             {/* To display success messages and error messages */}
             <Alert isAlertOpen={isAlertOpen} type={alertType} message={alertMessage} setIsAlertOpen={setIsAlertOpen} />
+
+            {/* To display Confirm messages to remove category */}
+            <ConfirmationAlert open={isConfirmationAlertOpen} type={confirmationAlertType} action={remove} setIsConfirmationAlertOpen={setIsConfirmationAlertOpen} isButtonLoading={isButtonLoading} />
+
         </main>
     )
 }
