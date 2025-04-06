@@ -13,7 +13,7 @@ export default function AdminReviews({ loggedUser }) {
     const backendUrl = import.meta.env.VITE_BACKEND_URL;
     const token = import.meta.env.VITE_TOKEN
     const defaultHeight = 910;
-    const baseRecordCount = 7;
+    const baseRecordCount = 8;
 
     // Initial RowCount Calculation
     const getInitialRowCount = () => {
@@ -120,30 +120,14 @@ export default function AdminReviews({ loggedUser }) {
                             <span className="text-[16px] text-gray-700">See information about all reviews</span>
                         </div>
                     </div>
-                </div>
-
-                {/* second row */}
-                <div className="w-full h-[90px] flex justify-between items-center bg-red-">
-                    {/* Tabs */}
-                    <div className="ml-[20px]">
-                        <Tabs tabs={tabs} selectedTab={selectedTab} setSelectedTab={setSelectedTab} setPageNo={setPageNo} setIsLoaded={setIsLoaded} />
-                    </div>
-                    {/* Search */}
                     <div className="mr-[20px]">
-                        <div className="relative flex items-center w-[200px] md:w-[300px]">
-                            <AiOutlineSearch className="absolute left-4 w-4 h-4 text-gray-600" />
-                            <input
-                                type="search"
-                                placeholder="Search"
-                                className="w-full h-10 pl-10 pr-4 border border-gray-600 rounded-lg text-gray-900 outline-none transition-all placeholder-gray-600"
-                            />
-                        </div>
+                        <Tabs tabs={tabs} selectedTab={selectedTab} setSelectedTab={setSelectedTab} setPageNo={setPageNo} setIsLoaded={setIsLoaded} />
                     </div>
                 </div>
 
                 {/* table row */}
-                <div className="w-full h-[calc(100vh-305px)] overflow-auto">
-                    <TableContainer component={Paper} elevation={0} sx={{ maxHeight: "calc(100vh - 305px)", overflow: "auto", border: "none" }}>
+                <div className="w-full h-[calc(100vh-230px)] overflow-auto mt-[15px]">
+                    <TableContainer component={Paper} elevation={0} sx={{ maxHeight: "calc(100vh - 230px)", overflow: "auto", border: "none" }}>
                         <Table stickyHeader sx={{ minWidth: 580, border: "none" }} aria-label="simple table">
 
                             <TableHead>
