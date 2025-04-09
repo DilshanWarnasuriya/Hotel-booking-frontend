@@ -19,10 +19,10 @@ export default function AdminMain() {
             </div>
             <div className="w-full h-screen hidden sm:block lg:ml-[250px] xl:ml-[320px]">
                 <Routes path="/*">
-                    <Route path="/users" element={<AdminUsers loggedUser={loggedUser} />} />
                     <Route path="/categories" element={<AdminCategories loggedUser={loggedUser} />} />
                     <Route path="/rooms" element={<AdminRooms loggedUser={loggedUser} />} />
                     <Route path="/reviews" element={<AdminReviews loggedUser={loggedUser} />} />
+                    <Route path="/users" element={<AdminUsers loggedUser={loggedUser} />} />
                 </Routes>
             </div>
         </section>

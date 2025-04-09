@@ -31,10 +31,10 @@ export default function SideNavigationBar({ loggedUser }) {
                     <span className={`${currentUrl == "/admin" || currentUrl == "/admin/" ? "text-[#3063ba]" : "text-black"}`}>Dashboard</span>
                 </Link>
 
-                <Link to="/admin/booking"
-                    className={`${linkStyle} ${currentUrl == "/admin/booking" || currentUrl == "/admin/booking/" ? "bg-[#e7eef9]" : ""}`}>
-                    <TbBrandBooking size={20} color={`${currentUrl == "/admin/booking" || currentUrl == "/admin/booking/" ? "#3063ba" : "#757575"}`} className="mr-[10px] " />
-                    <span className={`${currentUrl == "/admin/booking" || currentUrl == "/admin/booking/" ? "text-[#3063ba]" : "text-black"}`}>Bookings</span>
+                <Link to="/admin/bookings"
+                    className={`${linkStyle} ${currentUrl == "/admin/bookings" || currentUrl == "/admin/bookings/" ? "bg-[#e7eef9]" : ""}`}>
+                    <TbBrandBooking size={20} color={`${currentUrl == "/admin/bookings" || currentUrl == "/admin/bookings/" ? "#3063ba" : "#757575"}`} className="mr-[10px] " />
+                    <span className={`${currentUrl == "/admin/bookings" || currentUrl == "/admin/bookings/" ? "text-[#3063ba]" : "text-black"}`}>Bookings</span>
                 </Link>
 
                 <Link to="/admin/categories"
@@ -43,10 +43,10 @@ export default function SideNavigationBar({ loggedUser }) {
                     <span className={`${currentUrl == "/admin/categories" || currentUrl == "/admin/categories/" ? "text-[#3063ba]" : "text-black"}`}>Categories</span>
                 </Link>
 
-                <Link to="/admin/Rooms"
-                    className={`${linkStyle} ${currentUrl == "/admin/Rooms" || currentUrl == "/admin/Rooms/" ? "bg-[#e7eef9]" : ""}`}>
-                    <IoIosBed size={20} color={`${currentUrl == "/admin/Rooms" || currentUrl == "/admin/Rooms/" ? "#3063ba" : "#757575"}`} className="mr-[10px] " />
-                    <span className={`${currentUrl == "/admin/Rooms" || currentUrl == "/admin/Rooms/" ? "text-[#3063ba]" : "text-black"}`}>Rooms</span>
+                <Link to="/admin/rooms"
+                    className={`${linkStyle} ${currentUrl == "/admin/rooms" || currentUrl == "/admin/rooms/" ? "bg-[#e7eef9]" : ""}`}>
+                    <IoIosBed size={20} color={`${currentUrl == "/admin/rooms" || currentUrl == "/admin/rooms/" ? "#3063ba" : "#757575"}`} className="mr-[10px] " />
+                    <span className={`${currentUrl == "/admin/rooms" || currentUrl == "/admin/rooms/" ? "text-[#3063ba]" : "text-black"}`}>Rooms</span>
                 </Link>
 
                 <Link to="/admin/reviews"
