@@ -4,6 +4,7 @@ import AdminUsers from "./Admin_Users";
 import AdminCategories from "./Admin_Categories";
 import AdminRooms from "./Admin_Rooms";
 import AdminReviews from "./Admin_Reviews";
+import AdminBookings from "./Admin_Bookings";
 
 const loggedUser = {
     image: "https://media.istockphoto.com/id/870079648/photo/seeing-things-in-a-positive-light.jpg?s=170667a&w=0&k=20&c=0p7KCODmXjvX-9JkkrHg9SPL0zojHb_8ygOfPylt3W8=",
@@ -19,6 +20,7 @@ export default function AdminMain() {
             </div>
             <div className="w-full h-screen hidden sm:block lg:ml-[250px] xl:ml-[320px]">
                 <Routes path="/*">
+                    <Route path="/bookings" element={<AdminBookings loggedUser={loggedUser} />} />
                     <Route path="/categories" element={<AdminCategories loggedUser={loggedUser} />} />
                     <Route path="/rooms" element={<AdminRooms loggedUser={loggedUser} />} />
                     <Route path="/reviews" element={<AdminReviews loggedUser={loggedUser} />} />
