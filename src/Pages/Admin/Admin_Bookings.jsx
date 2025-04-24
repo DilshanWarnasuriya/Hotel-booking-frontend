@@ -1,13 +1,30 @@
-import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Avatar, Box, Typography, IconButton, Pagination } from "@mui/material";
-import { useState } from "react";
+import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Avatar, Box, Typography, IconButton, Pagination, Skeleton } from "@mui/material";
+import { useEffect, useState } from "react";
 import { TiThMenu, TiUserAdd } from "react-icons/ti";
 import { AiOutlineSearch } from "react-icons/ai";
 import { MdEdit, MdDelete } from "react-icons/md";
 import Tabs from "../../Components/Tabs";
 import Badge from "../../Components/Badge";
 import SideNavigationDrawer from "../../Components/SideNavigationDrawer";
+import axios from "axios";
+import Alert from "../../Components/Alert";
 
 export default function AdminBookings({ loggedUser }) {
+
+    const backendUrl = import.meta.env.VITE_BACKEND_URL;
+    const token = import.meta.env.VITE_TOKEN
+    const defaultHeight = 910;
+    const baseRecordCount = 7;
+
+    // Initial RowCount Calculation
+    const getInitialRowCount = () => {
+        const newHeight = window.innerHeight;
+        if (newHeight > defaultHeight) {
+            const reduceHeight = newHeight - defaultHeight;
+            return baseRecordCount + Math.round(reduceHeight / 80);
+        }
+        return baseRecordCount;
+    };
 
     // tab related
     const tabs = ["Pending", "Confirm", "Check in"];
@@ -16,9 +33,69 @@ export default function AdminBookings({ loggedUser }) {
     const [isSidebarDrawerOpen, setIsSidebarDrawerOpen] = useState(false);
     const toggleDrawer = (newOpen) => () => setIsSidebarDrawerOpen(newOpen);
     // Table related
+    const [bookings, setBookings] = useState([]);
     const [isLoaded, setIsLoaded] = useState(false);
     const [pageNo, setPageNo] = useState(1);
-    const [totalPages, setTotalPages] = useState(5);
+    const [totalPages, setTotalPages] = useState(0);
+    const [recordCount, setRecordCount] = useState(getInitialRowCount()); // table record count
+    // Alert related
+    const [isAlertOpen, setIsAlertOpen] = useState(false);
+    const [alertType, setAlertType] = useState("");
+    const [alertMessage, setAlertMessage] = useState("");
+
+    // Calculating Record Count when changing window height
+    useEffect(() => {
+        const handleResize = () => {
+            const newHeight = window.innerHeight;
+            if (newHeight > defaultHeight) {
+                const reduceHeight = newHeight - defaultHeight;
+                setRecordCount(baseRecordCount + Math.round(reduceHeight / 80));
+                setIsLoaded(false)
+            } else {
+                setRecordCount(baseRecordCount);
+            }
+        };
+        window.addEventListener("resize", handleResize); // Add Event Listener
+        return () => { // Cleanup
+            window.removeEventListener("resize", handleResize);
+        };
+    }, []);
+
+    // retrieve Record
+    useEffect(() => {
+        if (!isLoaded) {
+            axios.get(`${backendUrl}/api/booking`, {
+                params: { status: selectedTab, pageNo: pageNo, recordCount: recordCount },
+                headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" }
+            })
+                .then(result => {
+                    setBookings(result.data.booking);
+                    setTotalPages(result.data.totalPage);
+                    setIsLoaded(true);
+                })
+                .catch(error => {
+                    setBookings([]);
+                    setIsLoaded(true);
+                    setAlertType("error")
+                    setAlertMessage(error.response.data.message)
+                    setIsAlertOpen(true);
+                })
+        }
+    }, [isLoaded])
+
+    // separate Date 
+    function getDate(date) {
+        date = new Date(date)
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0'); // Months are 0-indexed
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}.${month}.${day}`;  // Format as YYYY.MM.DD
+    }
+    // separate time
+    function getTime(date) {
+        date = new Date(date)
+        return date.toLocaleTimeString('en-LK', { timeZone: 'Asia/Colombo', hour: '2-digit', minute: '2-digit', hour12: true }).replace(':', '.'); // Sri Lanka time formatting
+    }
 
 
     return (
@@ -45,7 +122,7 @@ export default function AdminBookings({ loggedUser }) {
                     {/* Add user Button */}
                     <div className="mr-[20px]">
                         <button className="bg-[#212121] text-white py-[12px] px-[20px] rounded-lg text-[14px] flex items-center font-bold cursor-pointer"
-                            onClick={() => { }}>
+                            onClick={() => { persist() }}>
                             <TiUserAdd size={20} className="mr-[15px]" />  {/* icon */}
                             ADD NEW BOOKING
                         </button>
@@ -56,7 +133,7 @@ export default function AdminBookings({ loggedUser }) {
                 <div className="w-full h-[90px] flex justify-between items-center bg-red-">
                     {/* Tabs */}
                     <div className="ml-[20px]">
-                        <Tabs tabs={tabs} selectedTab={selectedTab} setSelectedTab={setSelectedTab} setIsLoaded={setIsLoaded} />
+                        <Tabs tabs={tabs} selectedTab={selectedTab} setSelectedTab={setSelectedTab} setPageNo={setPageNo} setIsLoaded={setIsLoaded} />
                     </div>
                     {/* Search */}
                     <div className="mr-[20px]">
@@ -88,41 +165,97 @@ export default function AdminBookings({ loggedUser }) {
                             </TableHead>
 
                             <TableBody>
-                                <TableRow key={1} sx={{ "&:hover": { backgroundColor: "#e8eef8" }, transition: "background-color 0.3s ease" }}>
-                                    {/* User column */}
-                                    <TableCell component="th" scope="row">
-                                        <Box display="flex" alignItems="center">
-                                            <Avatar src="https://media.istockphoto.com/id/870079648/photo/seeing-things-in-a-positive-light.jpg?s=170667a&w=0&k=20&c=0p7KCODmXjvX-9JkkrHg9SPL0zojHb_8ygOfPylt3W8=" sx={{ width: 45, height: 45 }} />  {/* User image */}
-                                            <Box sx={{ ml: 2 }}>
-                                                <Typography fontWeight="bold" noWrap> Mr. Yashoda </Typography> {/* User Name */}
-                                                <Typography variant="body2" color="text.secondary" noWrap> 0743838490 </Typography> {/* User Email */}
-                                            </Box>
-                                        </Box>
-                                    </TableCell>
-                                    {/* Room No */}
-                                    <TableCell align="center" > 102 </TableCell>
-                                    {/* Start & End */}
-                                    <TableCell align="center" >
-                                        <Box >
-                                            <Typography noWrap> 2025.03.12 </Typography>
-                                            <Typography noWrap> 2025.03.12 </Typography>
-                                        </Box>
-                                    </TableCell>
-                                    {/* Check in & out */}
-                                    <TableCell align="center" >
-                                        <Box >
-                                            <Typography noWrap> 8.30 A.M </Typography>
-                                            <Typography noWrap> 7.30 A.M </Typography>
-                                        </Box>
-                                    </TableCell>
-                                    {/* Payed*/}
-                                    <TableCell align="center"><Badge type="error" message="No" /></TableCell>
-                                    {/* Actions column */}
-                                    <TableCell align="center" >
-                                        <IconButton color="primary"> <MdEdit /> </IconButton> {/* edit button */}
-                                        <IconButton color="error"> <MdDelete /> </IconButton> {/* delete button */}
-                                    </TableCell>
-                                </TableRow>
+                                {  // Table Skeleton
+                                    !isLoaded ?
+                                        Array.from({ length: recordCount }).map((_, index) => (
+                                            <TableRow key={index}>
+                                                <TableCell component="th" scope="row">
+                                                    <Box display="flex" alignItems="center">
+                                                        <Skeleton variant="circular" width={45} height={45} />
+                                                        <Box sx={{ ml: 2 }}>
+                                                            <Skeleton variant="text" width={120} />
+                                                            <Skeleton variant="text" width={160} />
+                                                        </Box>
+                                                    </Box>
+                                                </TableCell>
+                                                <TableCell align="center">
+                                                    <Box display="flex" justifyContent="center" width="100%">
+                                                        <Skeleton variant="text" width={30} />
+                                                    </Box>
+                                                </TableCell>
+                                                <TableCell align="center" sx={{ display: { xs: "none", md: "table-cell" } }} >
+                                                    <Box display="flex" flexDirection="column" justifyContent="center" alignItems="center" width="100%">
+                                                        <Skeleton variant="text" width={85} />
+                                                        <Skeleton variant="text" width={85} />
+                                                    </Box>
+                                                </TableCell>
+                                                <TableCell align="center">
+                                                    <Box display="flex" flexDirection="column" justifyContent="center" alignItems="center" width="100%">
+                                                        <Skeleton variant="text" width={70} />
+                                                        <Skeleton variant="text" width={70} />
+                                                    </Box>
+                                                </TableCell>
+
+                                                <TableCell align="center">
+                                                    <Box display="flex" justifyContent="center" width="100%">
+                                                        <Skeleton variant="text" height={40} width={50} />
+                                                    </Box>
+                                                </TableCell>
+
+                                                <TableCell align="center">
+                                                    <Box display="flex" justifyContent="center">
+                                                        <Skeleton variant="circular" width={40} height={40} sx={{ mr: 1 }} />
+                                                        <Skeleton variant="circular" width={40} height={40} />
+                                                    </Box>
+                                                </TableCell>
+                                            </TableRow>
+                                        ))
+                                        : // Table Content
+                                        (bookings && bookings.length > 0) ?
+                                            bookings.map((element, index) => {
+                                                return (
+                                                    <TableRow key={index} sx={{ "&:hover": { backgroundColor: "#e8eef8" }, transition: "background-color 0.3s ease" }}>
+                                                        {/* User column */}
+                                                        <TableCell component="th" scope="row">
+                                                            <Box display="flex" alignItems="center">
+                                                                <Avatar src={element.image} sx={{ width: 45, height: 45 }} />  {/* User image */}
+                                                                <Box sx={{ ml: 2 }}>
+                                                                    <Typography fontWeight="bold" noWrap> {element.name} </Typography> {/* User Name */}
+                                                                    <Typography variant="body2" color="text.secondary" noWrap> {element.contactNo} </Typography> {/* User Email */}
+                                                                </Box>
+                                                            </Box>
+                                                        </TableCell>
+                                                        {/* Room No */}
+                                                        <TableCell align="center" > {element.roomNo} </TableCell>
+                                                        {/* Start & End */}
+                                                        <TableCell align="center" >
+                                                            <Box >
+                                                                <Typography noWrap> {getDate(element.startDate)} </Typography>
+                                                                <Typography noWrap> {getDate(element.endDate)} </Typography>
+                                                            </Box>
+                                                        </TableCell>
+                                                        {/* Check in & out */}
+                                                        <TableCell align="center" >
+                                                            <Box >
+                                                                <Typography noWrap> {element.checkIn ? getTime(element.checkIn) : "-"} </Typography>
+                                                                <Typography noWrap> {element.checkOut ? getTime(element.checkOut) : "-"} </Typography>
+                                                            </Box>
+                                                        </TableCell>
+                                                        {/* Payed*/}
+                                                        <TableCell align="center"><Badge type={element.payed ? "success": "error"} message={element.payed ? "Yes" : "No"} /></TableCell>
+                                                        {/* Actions column */}
+                                                        <TableCell align="center" >
+                                                            <IconButton color="primary"> <MdEdit /> </IconButton> {/* edit button */}
+                                                            <IconButton color="error"> <MdDelete /> </IconButton> {/* delete button */}
+                                                        </TableCell>
+                                                    </TableRow>
+                                                )
+                                            })
+                                            : // Empty Table
+                                            <TableRow>
+                                                <TableCell colSpan={6} align="center">No users found</TableCell>
+                                            </TableRow>
+                                }
                             </TableBody>
 
                         </Table>
@@ -136,6 +269,7 @@ export default function AdminBookings({ loggedUser }) {
                         count={totalPages}
                         onChange={(event, value) => {
                             setPageNo(value);
+                            isLoaded(false);
                         }}
                         variant="outlined"
                         color="primary"
@@ -143,6 +277,9 @@ export default function AdminBookings({ loggedUser }) {
                 </div>
 
             </div>
+
+            {/* To display success messages and error messages */}
+            <Alert isAlertOpen={isAlertOpen} type={alertType} message={alertMessage} setIsAlertOpen={setIsAlertOpen} />
         </main>
     )
 }
