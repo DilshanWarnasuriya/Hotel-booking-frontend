@@ -158,7 +158,7 @@ export default function AdminBookings({ loggedUser }) {
                                     <TableCell sx={{ backgroundColor: "#f5f5f5", fontWeight: "bold", position: "sticky", top: 0, zIndex: 1 }}>users</TableCell>
                                     <TableCell align="center" sx={{ backgroundColor: "#f5f5f5", fontWeight: "bold", position: "sticky", top: 0, zIndex: 1 }}>Room</TableCell>
                                     <TableCell align="center" sx={{ backgroundColor: "#f5f5f5", fontWeight: "bold", position: "sticky", top: 0, zIndex: 1 }}>Start & End</TableCell>
-                                    <TableCell align="center" sx={{ backgroundColor: "#f5f5f5", fontWeight: "bold", position: "sticky", top: 0, zIndex: 1, }}>In & Out</TableCell>
+                                    <TableCell align="center" sx={{ backgroundColor: "#f5f5f5", fontWeight: "bold", position: "sticky", top: 0, zIndex: 1, display: selectedTab == "Check in" ? "table-cell" : "none" }}>In & Out</TableCell>
                                     <TableCell align="center" sx={{ backgroundColor: "#f5f5f5", fontWeight: "bold", position: "sticky", top: 0, zIndex: 1 }}>Payed</TableCell>
                                     <TableCell align="center" sx={{ backgroundColor: "#f5f5f5", fontWeight: "bold", position: "sticky", top: 0, zIndex: 1 }}>Actions</TableCell>
                                 </TableRow>
@@ -189,7 +189,7 @@ export default function AdminBookings({ loggedUser }) {
                                                         <Skeleton variant="text" width={85} />
                                                     </Box>
                                                 </TableCell>
-                                                <TableCell align="center">
+                                                <TableCell align="center" sx={{ display: selectedTab == "Check in" ? "table-cell" : "none" }} >
                                                     <Box display="flex" flexDirection="column" justifyContent="center" alignItems="center" width="100%">
                                                         <Skeleton variant="text" width={70} />
                                                         <Skeleton variant="text" width={70} />
@@ -226,7 +226,12 @@ export default function AdminBookings({ loggedUser }) {
                                                             </Box>
                                                         </TableCell>
                                                         {/* Room No */}
-                                                        <TableCell align="center" > {element.roomNo} </TableCell>
+                                                        <TableCell align="center" >
+                                                            <Box >
+                                                                <Typography noWrap> {element.roomNo} </Typography>
+                                                                <Typography noWrap> {element.category} </Typography>
+                                                            </Box>
+                                                        </TableCell>
                                                         {/* Start & End */}
                                                         <TableCell align="center" >
                                                             <Box >
@@ -235,14 +240,14 @@ export default function AdminBookings({ loggedUser }) {
                                                             </Box>
                                                         </TableCell>
                                                         {/* Check in & out */}
-                                                        <TableCell align="center" >
+                                                        <TableCell align="center" sx={{ display: selectedTab == "Check in" ? "table-cell" : "none" }} >
                                                             <Box >
                                                                 <Typography noWrap> {element.checkIn ? getTime(element.checkIn) : "-"} </Typography>
                                                                 <Typography noWrap> {element.checkOut ? getTime(element.checkOut) : "-"} </Typography>
                                                             </Box>
                                                         </TableCell>
                                                         {/* Payed*/}
-                                                        <TableCell align="center"><Badge type={element.payed ? "success": "error"} message={element.payed ? "Yes" : "No"} /></TableCell>
+                                                        <TableCell align="center"><Badge type={element.payed ? "success" : "error"} message={element.payed ? "Yes" : "No"} /></TableCell>
                                                         {/* Actions column */}
                                                         <TableCell align="center" >
                                                             <IconButton color="primary"> <MdEdit /> </IconButton> {/* edit button */}
