@@ -1,13 +1,20 @@
-import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Avatar, Box, Typography, IconButton, Pagination, Skeleton } from "@mui/material";
+import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Avatar, Box, Typography, IconButton, Pagination, Skeleton, Dialog, DialogTitle, DialogContent, TextField, FormControl, Select, MenuItem, InputLabel, FormHelperText, FormControlLabel, Checkbox } from "@mui/material";
 import { useEffect, useState } from "react";
-import { TiThMenu, TiUserAdd } from "react-icons/ti";
+import { TiThMenu } from "react-icons/ti";
 import { AiOutlineSearch } from "react-icons/ai";
 import { MdEdit, MdDelete } from "react-icons/md";
+import { Tailspin } from "ldrs/react";
+import { IoClose } from "react-icons/io5";
+import { IoMdAddCircleOutline } from "react-icons/io";
 import Tabs from "../../Components/Tabs";
 import Badge from "../../Components/Badge";
 import SideNavigationDrawer from "../../Components/SideNavigationDrawer";
 import axios from "axios";
 import Alert from "../../Components/Alert";
+import { DemoContainer } from '@mui/x-date-pickers/internals/demo';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 
 export default function AdminBookings({ loggedUser }) {
 
@@ -15,6 +22,8 @@ export default function AdminBookings({ loggedUser }) {
     const token = import.meta.env.VITE_TOKEN
     const defaultHeight = 910;
     const baseRecordCount = 7;
+    const contactNoRegex = /^0\d{9}$/;
+    const personCountRegex = /^[1-9]\d*$/;
 
     // Initial RowCount Calculation
     const getInitialRowCount = () => {
@@ -42,6 +51,18 @@ export default function AdminBookings({ loggedUser }) {
     const [isAlertOpen, setIsAlertOpen] = useState(false);
     const [alertType, setAlertType] = useState("");
     const [alertMessage, setAlertMessage] = useState("");
+    // Add and Update booking Dialog related
+    const [isDialogOpen, setIsDialogOpen] = useState(false);
+    const [dialogTitle, setDialogTitle] = useState("");
+
+    const initialBooking = { id: "", roomNo: "", category: "", name: "", image: "", contactNo: "", personCount: "", startDate: "", endDate: "", checkIn: "", checkOut: "", status: "", reason: "", timeStamp: "", payed: false }; // Booking structure
+    const [booking, setBooking] = useState(initialBooking);
+    const [bookingError, setBookingError] = useState("");
+    const [isButtonClicked, setIsButtonClicked] = useState(false);
+    const [isButtonLoading, setIsButtonLoading] = useState(false);
+    const [currentBooking, setCurrentBooking] = useState(initialBooking);
+    const initialUserName = { title: "", firstName: "" }
+    const [userName, setUserName] = useState(initialUserName);
 
     // Calculating Record Count when changing window height
     useEffect(() => {
@@ -97,6 +118,25 @@ export default function AdminBookings({ loggedUser }) {
         return date.toLocaleTimeString('en-LK', { timeZone: 'Asia/Colombo', hour: '2-digit', minute: '2-digit', hour12: true }).replace(':', '.'); // Sri Lanka time formatting
     }
 
+    // handle all inputs in dialog
+    function handleInputChange(e) {
+        const { name, value } = e.target;
+        if (name == "title" || name == "firstName") {
+            setUserName(prev => ({ ...prev, [name]: value }))
+        }
+        else {
+            setBooking(prev => ({ ...prev, [name]: value }))
+        }
+        setBookingError("")
+    }
+
+    function persist() {
+        setIsButtonClicked(true);
+        const newBooking = booking;
+        newBooking.name = userName.title + "." + userName.firstName
+        console.table(newBooking)
+    }
+
 
     return (
         <main className="App w-full h-screen flex p-[25px]">
@@ -119,11 +159,17 @@ export default function AdminBookings({ loggedUser }) {
                             <span className="text-[16px] text-gray-700">See information about all bookings</span>
                         </div>
                     </div>
-                    {/* Add user Button */}
+                    {/* Add booking Button */}
                     <div className="mr-[20px]">
                         <button className="bg-[#212121] text-white py-[12px] px-[20px] rounded-lg text-[14px] flex items-center font-bold cursor-pointer"
-                            onClick={() => { persist() }}>
-                            <TiUserAdd size={20} className="mr-[15px]" />  {/* icon */}
+                            onClick={() => {
+                                setBooking(initialBooking);
+                                setBookingError("")
+                                setDialogTitle("Add New Booking");
+                                setIsButtonClicked(false);
+                                setIsDialogOpen(true);
+                            }}>
+                            <IoMdAddCircleOutline size={20} className="mr-[10px]" /> {/* icon */}
                             ADD NEW BOOKING
                         </button>
                     </div>
@@ -155,7 +201,7 @@ export default function AdminBookings({ loggedUser }) {
 
                             <TableHead>
                                 <TableRow sx={{ backgroundColor: "#f5f5f5" }}>
-                                    <TableCell sx={{ backgroundColor: "#f5f5f5", fontWeight: "bold", position: "sticky", top: 0, zIndex: 1 }}>users</TableCell>
+                                    <TableCell sx={{ backgroundColor: "#f5f5f5", fontWeight: "bold", position: "sticky", top: 0, zIndex: 1 }}>Users</TableCell>
                                     <TableCell align="center" sx={{ backgroundColor: "#f5f5f5", fontWeight: "bold", position: "sticky", top: 0, zIndex: 1 }}>Room</TableCell>
                                     <TableCell align="center" sx={{ backgroundColor: "#f5f5f5", fontWeight: "bold", position: "sticky", top: 0, zIndex: 1 }}>Start & End</TableCell>
                                     <TableCell align="center" sx={{ backgroundColor: "#f5f5f5", fontWeight: "bold", position: "sticky", top: 0, zIndex: 1, display: selectedTab == "Check in" ? "table-cell" : "none" }}>In & Out</TableCell>
@@ -215,13 +261,13 @@ export default function AdminBookings({ loggedUser }) {
                                             bookings.map((element, index) => {
                                                 return (
                                                     <TableRow key={index} sx={{ "&:hover": { backgroundColor: "#e8eef8" }, transition: "background-color 0.3s ease" }}>
-                                                        {/* User column */}
+                                                        {/* Booking column */}
                                                         <TableCell component="th" scope="row">
                                                             <Box display="flex" alignItems="center">
-                                                                <Avatar src={element.image} sx={{ width: 45, height: 45 }} />  {/* User image */}
+                                                                <Avatar src={element.image} sx={{ width: 45, height: 45 }} />  {/* Booking image */}
                                                                 <Box sx={{ ml: 2 }}>
-                                                                    <Typography fontWeight="bold" noWrap> {element.name} </Typography> {/* User Name */}
-                                                                    <Typography variant="body2" color="text.secondary" noWrap> {element.contactNo} </Typography> {/* User Email */}
+                                                                    <Typography fontWeight="bold" noWrap> {element.name} </Typography> {/* Booking Name */}
+                                                                    <Typography variant="body2" color="text.secondary" noWrap> {element.contactNo} </Typography> {/* Booking Email */}
                                                                 </Box>
                                                             </Box>
                                                         </TableCell>
@@ -258,7 +304,7 @@ export default function AdminBookings({ loggedUser }) {
                                             })
                                             : // Empty Table
                                             <TableRow>
-                                                <TableCell colSpan={6} align="center">No users found</TableCell>
+                                                <TableCell colSpan={6} align="center">No Booking found</TableCell>
                                             </TableRow>
                                 }
                             </TableBody>
@@ -282,6 +328,181 @@ export default function AdminBookings({ loggedUser }) {
                 </div>
 
             </div>
+
+            {/* Add and Update booking Dialog */}
+            <Dialog open={isDialogOpen} >
+
+                <div className="flex justify-between items-center"> 
+                    <DialogTitle> {dialogTitle} </DialogTitle>
+                    <IconButton style={{ marginRight: "10px" }} onClick={() => setIsDialogOpen(false)}> <IoClose /> </IconButton>
+                </div>
+
+                <DialogContent dividers>
+
+                    {/* Title and Name */}
+                    <div className="flex">
+                        <FormControl style={{ width: "200px" }}>
+                            <InputLabel error={isButtonClicked && userName.title == ""}>Title</InputLabel>
+                            <Select
+                                name="title"
+                                label="Title"
+                                value={userName.title}
+                                onChange={handleInputChange}
+                                error={isButtonClicked && userName.title == ""}
+                            >
+                                <MenuItem value="Mr">Male</MenuItem>
+                                <MenuItem value="Ms">Female</MenuItem>
+                            </Select>
+                            <FormHelperText error>{isButtonClicked && userName.title == "" ? "Select User Title" : ""}</FormHelperText>
+                        </FormControl>
+
+                        <TextField
+                            style={{ width: "200px", marginLeft: "10px" }}
+                            name="firstName"
+                            label="First Name"
+                            variant="outlined"
+                            value={userName.firstName}
+                            onChange={handleInputChange}
+                            error={isButtonClicked && userName.firstName.length < 4}
+                            helperText={`${isButtonClicked && userName.firstName.length < 4 ? "Enter more than 3 characters" : ""}`}
+                        />
+                    </div>
+
+                    {/* Contact no and person count */}
+                    <div className="flex mt-[15px]">
+                        <TextField
+                            style={{ width: "200px" }}
+                            name="contactNo"
+                            label="Contact No."
+                            variant="outlined"
+                            value={booking.contactNo}
+                            onChange={handleInputChange}
+                            error={isButtonClicked && booking.contactNo.length < 4 || bookingError == "Contact No is already used"}
+                            helperText={`${isButtonClicked && !contactNoRegex.test(booking.contactNo) ? "Enter Valid Contact No." : bookingError == "Contact No is already used" ? "Contact No is already used" : ""}`}
+                        />
+
+                        <TextField
+                            style={{ width: "200px", marginLeft: "10px" }}
+                            name="personCount"
+                            label="Person Count"
+                            variant="outlined"
+                            value={booking.personCount}
+                            onChange={handleInputChange}
+                            error={isButtonClicked && !personCountRegex.test(booking.personCount)}
+                            helperText={`${isButtonClicked && !personCountRegex.test(booking.personCount) ? "Enter Valid Person Count" : ""}`}
+                        />
+
+                    </div>
+
+                    {/* category and status */}
+                    <div className="flex mt-[15px]">
+                        <FormControl style={{ width: "200px" }}>
+                            <InputLabel error={isButtonClicked && booking.category == ""}>Category</InputLabel>
+                            <Select
+                                name="category"
+                                label="Category"
+                                value={booking.category}
+                                onChange={handleInputChange}
+                                error={isButtonClicked && booking.category == ""}
+                            >
+                                <MenuItem value="Luxury">Luxury</MenuItem>
+                                <MenuItem value="Stranded">Stranded</MenuItem>
+                            </Select>
+                            <FormHelperText error>{isButtonClicked && booking.category == "" ? "Select Room Category" : ""}</FormHelperText>
+                        </FormControl>
+
+                        <FormControl style={{ width: "200px", marginLeft: "10px" }}>
+                            <InputLabel error={isButtonClicked && booking.status == ""} >Status</InputLabel>
+                            <Select
+                                name="status"
+                                label="Status"
+                                value={booking.status}
+                                onChange={handleInputChange}
+                                error={isButtonClicked && booking.status == ""}
+                            >
+                                <MenuItem value="pending">Pending</MenuItem>
+                                <MenuItem value="confirm">Confirm</MenuItem>
+                                <MenuItem value="check in">Check In</MenuItem>
+                            </Select>
+                            <FormHelperText error>{isButtonClicked && booking.status == "" ? "Select Booking Status" : ""}</FormHelperText>
+                        </FormControl>
+                    </div>
+
+                    {/* start date and end date */}
+                    <div className="flex mt-[5px]">
+
+                        <LocalizationProvider dateAdapter={AdapterDayjs}>
+                            <DemoContainer components={['DatePicker']}>
+                                <DatePicker
+                                    label="Start Date"
+                                    name="startDate"
+                                    onChange={(newValue) => {
+                                        const formattedDate = newValue ? newValue.format("YYYY.MM.DD") : "";
+                                        setBooking(prev => ({ ...prev, startDate: formattedDate }));
+                                    }}
+                                    disablePast
+                                    slotProps={{
+                                        textField: {
+                                            helperText: `${isButtonClicked && booking.startDate == "" ? "Select Start Date" : ""}`,
+                                            style: { width: "200px" },
+                                            error: isButtonClicked && booking.startDate == ""
+                                        },
+                                    }}
+                                />
+
+                                <DatePicker
+                                    label="Start Date"
+                                    name="endDate"
+                                    onChange={(newValue) => {
+                                        const formattedDate = newValue ? newValue.format("YYYY.MM.DD") : "";
+                                        setBooking(prev => ({ ...prev, endDate: formattedDate }));
+                                    }}
+                                    disablePast
+                                    slotProps={{
+                                        textField: {
+                                            helperText: `${isButtonClicked && booking.endDate == "" ? "Select End Date" : ""}`,
+                                            style: { width: "200px", marginLeft: "10px" },
+                                            error: isButtonClicked && booking.endDate == ""
+                                        },
+                                    }}
+                                />
+                            </DemoContainer>
+                        </LocalizationProvider>
+
+                    </div>
+
+                    {/* payed tick */}
+                    <div className={`flex ml-[5px] mt-[10px]`}>
+                        <FormControlLabel
+                            control={
+                                <Checkbox checked={booking.payed} onChange={(e) => setBooking(prev => ({ ...prev, payed: e.target.checked ? true : false }))} />
+                            }
+                            label="Payed"
+                        />
+                    </div>
+
+                    {/* button  */}
+                    <div className="flex flex-col items-center mt-[10px]">
+                        {
+                            isButtonLoading
+                                ?
+                                <button className="w-full h-[45px] rounded-md bg-[#303030b7] text-white mb-[5px] font-bold flex justify-center items-center">
+                                    <Tailspin size="20" stroke="3" speed="0.9" color="white" />
+                                    <span className="ml-[10px]">Loading....</span>
+                                </button>
+                                :
+                                <button
+                                    className="w-full h-[45px] rounded-md bg-[#303030] text-white mb-[5px] font-bold cursor-pointer"
+                                    onClick={persist}
+                                > Add New Booking
+                                </button>
+                        }
+                        <span className="text-red-500"> {bookingError == "No any Changes" ? "No any Changes" : ""}</span>
+                    </div>
+
+                </DialogContent>
+
+            </Dialog>
 
             {/* To display success messages and error messages */}
             <Alert isAlertOpen={isAlertOpen} type={alertType} message={alertMessage} setIsAlertOpen={setIsAlertOpen} />

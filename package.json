@@ -13,6 +13,7 @@
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.0",
     "@mui/material": "^7.0.0",
+    "@mui/x-date-pickers": "^8.1.0",
     "@tailwindcss/vite": "^4.0.17",
     "axios": "^1.8.4",
     "ldrs": "^1.1.6",
