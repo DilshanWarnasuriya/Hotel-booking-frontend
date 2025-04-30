@@ -64,6 +64,7 @@ export default function AdminBookings({ loggedUser }) {
     const [currentBooking, setCurrentBooking] = useState(initialBooking);
     const initialUserName = { title: "", firstName: "" }
     const [userName, setUserName] = useState(initialUserName);
+    const [categories, setCategories] = useState([]);
 
     // Calculating Record Count when changing window height
     useEffect(() => {
@@ -86,6 +87,7 @@ export default function AdminBookings({ loggedUser }) {
     // retrieve Record
     useEffect(() => {
         if (!isLoaded) {
+            // get all bookings
             axios.get(`${backendUrl}/api/booking`, {
                 params: { status: selectedTab, pageNo: pageNo, recordCount: recordCount },
                 headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" }
@@ -93,13 +95,25 @@ export default function AdminBookings({ loggedUser }) {
                 .then(result => {
                     setBookings(result.data.booking);
                     setTotalPages(result.data.totalPage);
-                    setIsLoaded(true);
                 })
                 .catch(error => {
                     setBookings([]);
-                    setIsLoaded(true);
                     setAlertType("error")
                     setAlertMessage(error.response.data.message)
+                    setIsAlertOpen(true);
+                })
+
+            // get All categories
+            axios.get(`${backendUrl}/api/category`)
+                .then(result => {
+                    setCategories(result.data);
+                    setIsLoaded(true);
+                })
+                .catch(error => {
+                    setCategories([]);
+                    setIsLoaded(true);
+                    setAlertType("error");
+                    setAlertMessage(error.response.data.message);
                     setIsAlertOpen(true);
                 })
         }
@@ -455,6 +469,7 @@ export default function AdminBookings({ loggedUser }) {
 
                     {/* category and status */}
                     <div className="flex mt-[15px]">
+                        {/* category */}
                         <FormControl style={{ width: "200px" }}>
                             <InputLabel error={isButtonClicked && booking.category == ""}>Category</InputLabel>
                             <Select
@@ -463,13 +478,21 @@ export default function AdminBookings({ loggedUser }) {
                                 value={booking.category}
                                 onChange={handleInputChange}
                                 error={isButtonClicked && booking.category == ""}
-                            >
-                                <MenuItem value="Luxury">Luxury</MenuItem>
-                                <MenuItem value="Stranded">Stranded</MenuItem>
+                            > 
+                                {   // all categories names
+                                    categories.length > 0 ?
+                                        categories.map((element, index) => {
+                                            return (
+                                                <MenuItem key={index} value={element.name}>{element.name}</MenuItem>
+                                            )
+                                        })
+                                        : ""
+                                }
                             </Select>
                             <FormHelperText error>{isButtonClicked && booking.category == "" ? "Select Room Category" : ""}</FormHelperText>
                         </FormControl>
 
+                        {/* status */}
                         <FormControl style={{ width: "200px", marginLeft: "10px" }}>
                             <InputLabel error={isButtonClicked && booking.status == ""} >Status</InputLabel>
                             <Select
