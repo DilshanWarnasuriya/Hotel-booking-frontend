@@ -15,6 +15,7 @@ import { DemoContainer } from '@mui/x-date-pickers/internals/demo';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import dayjs from "dayjs";
 
 export default function AdminBookings({ loggedUser }) {
 
@@ -55,7 +56,7 @@ export default function AdminBookings({ loggedUser }) {
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [dialogTitle, setDialogTitle] = useState("");
 
-    const initialBooking = { id: "", roomNo: "", category: "", name: "", image: "", contactNo: "", personCount: "", startDate: "", endDate: "", checkIn: "", checkOut: "", status: "", reason: "", timeStamp: "", payed: false }; // Booking structure
+    const initialBooking = { id: "", roomNo: "", category: "", name: "", image: "", contactNo: "", personCount: "", startDate: null, endDate: null, checkIn: "", checkOut: "", status: "", reason: "", payed: false }; // Booking structure
     const [booking, setBooking] = useState(initialBooking);
     const [bookingError, setBookingError] = useState("");
     const [isButtonClicked, setIsButtonClicked] = useState(false);
@@ -130,6 +131,7 @@ export default function AdminBookings({ loggedUser }) {
         setBookingError("")
     }
 
+    // Add new Booking
     function persist() {
         setIsButtonClicked(true);
 
@@ -163,6 +165,33 @@ export default function AdminBookings({ loggedUser }) {
                 setIsButtonLoading(false);
                 setAlertType("error")
                 setAlertMessage(error.response.data.message)
+                setIsAlertOpen(true);
+            })
+    }
+
+    // find by booking id for edit details
+    function findById(id) {
+        axios.get(`${backendUrl}/api/booking/id/${id}`, { headers: { Authorization: `Bearer ${token}` } })
+            .then(result => {
+                const getBooking = result.data.booking;
+                // dates
+                getBooking.startDate = getBooking.startDate.split("T")[0].replace(/\-/g, '.');
+                getBooking.endDate = getBooking.endDate.split("T")[0].replace(/\-/g, '.');
+                // user name
+                const getUserName = userName;
+                getUserName.title = getBooking.name.split(".")[0];
+                getUserName.firstName = getBooking.name.split(".")[1];
+                setUserName(getUserName)
+
+                setBooking(getBooking);
+                setCurrentBooking(getBooking)
+                setBookingError("")
+                setDialogTitle("Edit Booking Details");
+                setIsDialogOpen(true);
+            })
+            .catch(error => {
+                setAlertType("error")
+                setAlertMessage(error.message)
                 setIsAlertOpen(true);
             })
     }
@@ -326,7 +355,7 @@ export default function AdminBookings({ loggedUser }) {
                                                         <TableCell align="center"><Badge type={element.payed ? "success" : "error"} message={element.payed ? "Yes" : "No"} /></TableCell>
                                                         {/* Actions column */}
                                                         <TableCell align="center" >
-                                                            <IconButton color="primary"> <MdEdit /> </IconButton> {/* edit button */}
+                                                            <IconButton color="primary" onClick={() => findById(element.id)}> <MdEdit /> </IconButton> {/* edit button */}
                                                             <IconButton color="error"> <MdDelete /> </IconButton> {/* delete button */}
                                                         </TableCell>
                                                     </TableRow>
@@ -453,6 +482,15 @@ export default function AdminBookings({ loggedUser }) {
                                 <MenuItem value="pending">Pending</MenuItem>
                                 <MenuItem value="confirm">Confirm</MenuItem>
                                 <MenuItem value="check in">Check In</MenuItem>
+                                {   // only edit dialog view
+                                    dialogTitle == "Edit Booking Details"
+                                        ?
+                                        <div>
+                                            <MenuItem value="check in">Check Out</MenuItem>
+                                            <MenuItem value="check in">Cancel</MenuItem>
+                                        </div>
+                                        : ""
+                                }
                             </Select>
                             <FormHelperText error>{isButtonClicked && booking.status == "" ? "Select Booking Status" : ""}</FormHelperText>
                         </FormControl>
@@ -470,12 +508,13 @@ export default function AdminBookings({ loggedUser }) {
                                         const formattedDate = newValue ? newValue.format("YYYY.MM.DD") : "";
                                         setBooking(prev => ({ ...prev, startDate: formattedDate }));
                                     }}
+                                    value={booking.startDate ? dayjs(booking.startDate, "YYYY.MM.DD") : null}
                                     disablePast
                                     slotProps={{
                                         textField: {
                                             helperText: `${isButtonClicked && booking.startDate == "" ? "Select Start Date" : ""}`,
                                             style: { width: "200px" },
-                                            error: isButtonClicked && booking.startDate == "" || bookingError == "Rooms not available this days"
+                                            error: (isButtonClicked && booking.startDate == "") || (bookingError === "Rooms not available this days")
                                         },
                                     }}
                                 />
@@ -487,6 +526,7 @@ export default function AdminBookings({ loggedUser }) {
                                         const formattedDate = newValue ? newValue.format("YYYY.MM.DD") : "";
                                         setBooking(prev => ({ ...prev, endDate: formattedDate }));
                                     }}
+                                    value={booking.endDate ? dayjs(booking.endDate, "YYYY.MM.DD") : null}
                                     disablePast
                                     slotProps={{
                                         textField: {
@@ -524,7 +564,7 @@ export default function AdminBookings({ loggedUser }) {
                                 <button
                                     className="w-full h-[45px] rounded-md bg-[#303030] text-white mb-[5px] font-bold cursor-pointer"
                                     onClick={persist}
-                                > Add New Booking
+                                > {dialogTitle == "Edit Booking Details" ? "Update Booking" : "Add New Booking"}
                                 </button>
                         }
                         <span className="text-red-500"> {bookingError == "No any Changes" ? "No any Changes" : ""}</span>
