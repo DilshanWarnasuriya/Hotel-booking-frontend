@@ -16,6 +16,7 @@
     "@mui/x-date-pickers": "^8.1.0",
     "@tailwindcss/vite": "^4.0.17",
     "axios": "^1.8.4",
+    "dayjs": "^1.11.13",
     "ldrs": "^1.1.6",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",

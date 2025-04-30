@@ -132,9 +132,39 @@ export default function AdminBookings({ loggedUser }) {
 
     function persist() {
         setIsButtonClicked(true);
+
+        if (userName.title == "" || userName.firstName.length < 4 || !contactNoRegex.test(booking.contactNo) || !personCountRegex.test(booking.personCount) || booking.category == "" || booking.status == "" || booking.startDate == "" || booking.endDate == "") {
+            return
+        }
+        if (new Date(booking.startDate) > new Date(booking.endDate)) {
+            setBookingError("Select date after start date")
+            return
+        }
+        setIsButtonLoading(true);
+
+        // Name
         const newBooking = booking;
-        newBooking.name = userName.title + "." + userName.firstName
-        console.table(newBooking)
+        newBooking.name = userName.title + "." + userName.firstName;
+
+        // Save booking
+        axios.post(`${backendUrl}/api/booking`, newBooking, { headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" } })
+            .then(result => {
+                setIsDialogOpen(false);
+                setAlertType("success")
+                setAlertMessage(result.data.message)
+                setIsAlertOpen(true);
+                setIsLoaded(false);
+                setIsButtonLoading(false);
+            })
+            .catch(error => {
+                if (error.response.data.message == "Rooms not available this days") {
+                    setBookingError(error.response.data.message)
+                }
+                setIsButtonLoading(false);
+                setAlertType("error")
+                setAlertMessage(error.response.data.message)
+                setIsAlertOpen(true);
+            })
     }
 
 
@@ -332,7 +362,7 @@ export default function AdminBookings({ loggedUser }) {
             {/* Add and Update booking Dialog */}
             <Dialog open={isDialogOpen} >
 
-                <div className="flex justify-between items-center"> 
+                <div className="flex justify-between items-center">
                     <DialogTitle> {dialogTitle} </DialogTitle>
                     <IconButton style={{ marginRight: "10px" }} onClick={() => setIsDialogOpen(false)}> <IoClose /> </IconButton>
                 </div>
@@ -340,7 +370,7 @@ export default function AdminBookings({ loggedUser }) {
                 <DialogContent dividers>
 
                     {/* Title and Name */}
-                    <div className="flex">
+                    <div className="flex mt-[20px]">
                         <FormControl style={{ width: "200px" }}>
                             <InputLabel error={isButtonClicked && userName.title == ""}>Title</InputLabel>
                             <Select
@@ -350,8 +380,8 @@ export default function AdminBookings({ loggedUser }) {
                                 onChange={handleInputChange}
                                 error={isButtonClicked && userName.title == ""}
                             >
-                                <MenuItem value="Mr">Male</MenuItem>
-                                <MenuItem value="Ms">Female</MenuItem>
+                                <MenuItem value="Mr">Mr</MenuItem>
+                                <MenuItem value="Ms">Ms</MenuItem>
                             </Select>
                             <FormHelperText error>{isButtonClicked && userName.title == "" ? "Select User Title" : ""}</FormHelperText>
                         </FormControl>
@@ -378,7 +408,7 @@ export default function AdminBookings({ loggedUser }) {
                             value={booking.contactNo}
                             onChange={handleInputChange}
                             error={isButtonClicked && booking.contactNo.length < 4 || bookingError == "Contact No is already used"}
-                            helperText={`${isButtonClicked && !contactNoRegex.test(booking.contactNo) ? "Enter Valid Contact No." : bookingError == "Contact No is already used" ? "Contact No is already used" : ""}`}
+                            helperText={`${isButtonClicked && !contactNoRegex.test(booking.contactNo) ? "Enter Valid Contact No." : ""}`}
                         />
 
                         <TextField
@@ -445,13 +475,13 @@ export default function AdminBookings({ loggedUser }) {
                                         textField: {
                                             helperText: `${isButtonClicked && booking.startDate == "" ? "Select Start Date" : ""}`,
                                             style: { width: "200px" },
-                                            error: isButtonClicked && booking.startDate == ""
+                                            error: isButtonClicked && booking.startDate == "" || bookingError == "Rooms not available this days"
                                         },
                                     }}
                                 />
 
                                 <DatePicker
-                                    label="Start Date"
+                                    label="End Date"
                                     name="endDate"
                                     onChange={(newValue) => {
                                         const formattedDate = newValue ? newValue.format("YYYY.MM.DD") : "";
@@ -460,9 +490,9 @@ export default function AdminBookings({ loggedUser }) {
                                     disablePast
                                     slotProps={{
                                         textField: {
-                                            helperText: `${isButtonClicked && booking.endDate == "" ? "Select End Date" : ""}`,
+                                            helperText: `${isButtonClicked && booking.endDate == "" ? "Select End Date" : isButtonClicked && new Date(booking.startDate) > new Date(booking.endDate) ? "Select date after start date" : ""}`,
                                             style: { width: "200px", marginLeft: "10px" },
-                                            error: isButtonClicked && booking.endDate == ""
+                                            error: isButtonClicked && booking.endDate == "" || isButtonClicked && new Date(booking.startDate) > new Date(booking.endDate) || bookingError == "Rooms not available this days"
                                         },
                                     }}
                                 />
